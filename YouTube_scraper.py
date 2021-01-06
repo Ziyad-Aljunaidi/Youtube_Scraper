@@ -15,6 +15,7 @@ wait = WebDriverWait(driver,10)
 url = input('Please enter a URL: ')
 driver.get(url)
 
+
 for info in wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,"div#meta yt-formatted-string"))):
     if info.text != "":
         print(info.text)
