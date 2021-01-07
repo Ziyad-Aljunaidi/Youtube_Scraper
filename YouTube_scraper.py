@@ -8,7 +8,7 @@ import time
 
 javascript_2 = "window.scrollTo(0, 150);"
 
-chromedriver = 'D:\Work\iamsick_scraper_selenium\chromedriver'
+chromedriver = 'D:\Work\David Berg - Youtube Scraper\chromedriver'
 driver = webdriver.Chrome(chromedriver)
 wait = WebDriverWait(driver,10)
 
