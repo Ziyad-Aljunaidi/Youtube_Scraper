@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait 
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
+import pandas as pd
 import csv
 import time
 
@@ -11,6 +12,12 @@ import time
 #https://www.youtube.com/c/LinusTechTips/videos
 #https://www.youtube.com/c/JomaOppa/videos
 #https://www.youtube.com/c/baldandbankrupt/videos
+
+
+df = pd.read_csv('settings.csv')
+chromedriver_dir = df['chromedriver_dir']
+results_file_dir = df['results_file_dir']
+print(chromedriver_dir[0])
 
 #Formating Time 
 now = datetime.now()
@@ -21,14 +28,12 @@ ff_dt_string = f_dt_string.replace(':','-')
 #Scrolling javascript executable code.
 javascript_2 = "window.scrollBy(0, 100);"
 
-chromedriver = 'D:\Work\David Berg - Youtube Scraper\chromedriver'
+chromedriver = chromedriver_dir[0]
 driver = webdriver.Chrome(chromedriver)
 wait = WebDriverWait(driver,0.5)
 
 url = input('Please enter a URL: ')
 driver.get(url)
-
-
 
 
 
@@ -41,26 +46,15 @@ else:
     pass
 
 #Creating the CSV File
-csv_file = open('Results_CSVs\{}.csv'.format(channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
+csv_file = open('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Channel Name', 'Video URL', 'Views', 'Likes', 'Dislikes', 'Title','# Of Title Chars', '# Of Description Chars'])
-#try:
-#    channel_verified = driver.find_element_by_xpath('//*[@id="channel-name"]/ytd-badge-supported-renderer/div')
-#    print('verified')
-#except:
-#    print('not verified')
 
 url_list =[]
-#for i in wait.until(EC.presence_of_all_elements_located((By.XPATH,'//*[@id="video-title"]'))):
-##videos_url = driver.find_elements_by_xpath('//*[@id="video-title"]')
-#    url_list.append(i.get_attribute('href'))
-#    driver.execute_script(javascript_2)
-#
-#print(url_list)
-#
 counter = 1
 vid = None
-tries = 5
+
+
 while True:
     try:
         #vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(counter))
@@ -72,32 +66,10 @@ while True:
         counter+=1
         driver.execute_script(javascript_2)
         
-        
-
     except:
-
-        #if tries > 0 :
-        #    driver.execute_script(javascript_2)
-        #    time.sleep(3)
-        #    vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(counter))))
-        #    url_vid = vid.find_element_by_xpath('//*[@id="video-title"]')
-        #    print(url_vid.get_attribute('href'))
-
-        #driver.execute_script(javascript_2)
-        #time.sleep(3)
-        #pass
         print('done')
         print(url_list)
         break
-    
-    
-
-
-
-#for url in videos_url:
-#    url_list.append(url.get_attribute('href'))
-
-#print(links)
 
 for url in url_list:
     driver.get(url)
