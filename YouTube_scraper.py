@@ -27,6 +27,13 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+##Creating a Folder
+#try:
+#    os.mkdir('./haha')
+#    print ('Directory, made')
+#except FileExistsError:
+#    print('Directory existed.')
+
 #TESTING LINK
 #https://www.youtube.com/c/LinusTechTips/videos
 #https://www.youtube.com/c/JomaOppa/videos
@@ -39,7 +46,8 @@ chromedriver_dir = df['chromedriver_dir']
 results_file_dir = df['results_file_dir']
 imgs_file = df['imgs_file']
 
-#print(chromedriver_dir[0])
+##print(chromedriver_dir[0])
+
 
 #Formating Time 
 now = datetime.now()
@@ -52,15 +60,22 @@ javascript_2 = "window.scrollBy(0, 70);"
 
 chromedriver = chromedriver_dir[0]
 driver = webdriver.Chrome(chromedriver)
-wait = WebDriverWait(driver,0.5)
+wait = WebDriverWait(driver,1)
 url = input('Please enter a URL: ')
 driver.get(url)
-url_list =[]
+
+channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
+print('Channel Name: ', channel_name)
+
 
 def collect_vids_urls(chnl_url):
-
     counter = 1
-    driver.get(chnl_url)
+    #driver.get(chnl_url)
+    #Creating the CSV File
+    csv_file = open('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Channel Name', 'Video URL'])
+    
 
     while True:
         try:
@@ -69,63 +84,70 @@ def collect_vids_urls(chnl_url):
             url_vid = vid.find_element_by_css_selector('#video-title')
             url = url_vid.get_attribute('href')
             print(url)
-            url_list.append(str(url))
+            csv_writer.writerow([channel_name , url])
             counter+=1
             driver.execute_script(javascript_2)
             
         except:
             print('done')
-            print(url_list)
             break
         time.sleep(0.1)
 
-    return url_list
+def collect_vid_data(channel_name):
 
-
-def collect_vid_data(vids_url_list):
-
-
-    
-    #Creating the CSV File
-    csv_file = open('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
+    #Creating the semi-final CSV File for saving the NEW scraped data
+    csv_file = open('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string + " SEMI-FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Views', 'Likes', 'Dislikes', 'Title','# Of Title Chars', '# Of Description Chars'])
+    csv_writer.writerow(['Channel Name', 'Video URL','Video ID', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars'])
 
-    if channel_name != "":
-        print(channel_name)
-    else:
-        print('Channel Name Not Found.')
-        pass
-
+    #reading the URLs scraped data
+    data_file = pd.read_csv('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string))
+    video_url = data_file['Video URL']
     
-    for url in vids_url_list:
+    counter = 0
+    for url in video_url:
         parsed = urlparse.urlparse(url)
         video_id = parse_qs(parsed.query)['v']
         print(video_id[0])
         driver.get(url)
         time.sleep(1)
         v_title = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"h1.title yt-formatted-string"))).text
+        remove_spaces = v_title.replace(' ', '')
+        cap_letters = 0
+        for letter in remove_spaces:
+            if letter.isupper():
+                cap_letters += 1
+            else:
+                pass
+
+        captial_ratio = cap_letters/len(remove_spaces)
+        formated_captial_ratio = "{:.2f}".format(captial_ratio)
+        
         v_description =  wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#description yt-formatted-string"))).text
         v_view = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#count span"))).text
         #v_date = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#date yt-formatted-string")))
         v_likes = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#top-level-buttons > ytd-toggle-button-renderer:nth-child(1)"))).text
         v_dislikes = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#top-level-buttons > ytd-toggle-button-renderer:nth-child(2)"))).text
+        
         print(v_title)
         print(len(v_title))
         print(len(v_description))
         print(v_view, v_likes, v_dislikes)
-        csv_writer.writerow([channel_name, driver.current_url ,video_id[0], v_view, v_likes, v_dislikes, v_title, len(v_title), len(v_description)])
+        csv_writer.writerow([channel_name, url, video_id[0], v_view, v_likes, v_dislikes, v_title, formated_captial_ratio, len(v_title), len(v_description)])
+
         
 count = 0
+
 #Getting the thumbnail image and save it for RGB breakdown.
 def get_thumbnail(counter):
     
-    df_read = pd.read_csv('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string))
-
-    csv_file = open('{}.csv'.format(channel_name+" "+final),'w', encoding='utf-8', newline='')
-    csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Views', 'Likes', 'Dislikes', 'Title','# Of Title Chars', '# Of Description Chars', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
     
+
+    csv_file = open('{}.csv'.format(channel_name+" "+ ff_dt_string + " FINAL"),'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
+    
+    df_read = pd.read_csv('{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ ff_dt_string + " SEMI-FINAL"))
     chnl_name = df_read['Channel Name']
     vid_url = df_read['Video URL']
     vids_id = df_read['Video ID']
@@ -133,6 +155,7 @@ def get_thumbnail(counter):
     likes= df_read['Likes']
     dislikes = df_read['Dislikes']
     title = df_read['Title']
+    title_captial_ratio = df_read['Title Captial Ratio']
     title_chars = df_read['# Of Title Chars']
     des_chars = df_read['# Of Description Chars']
     
@@ -161,10 +184,9 @@ def get_thumbnail(counter):
         #df["G"] = g
         #df["B"] = b
 
-        csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_chars[counter], des_chars[counter], max_rgb, min_rgb, r, g, b])
+        csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], max_rgb, min_rgb, r, g, b])
         counter += 1
 
 collect_vids_urls(url)
-channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
-collect_vid_data(url_list)
+collect_vid_data(channel_name)
 get_thumbnail(count)
