@@ -1,0 +1,27 @@
+Before using the scraper please make sure you installed Python:
+
+MAKE SURE TO CHECK add python 3.x to PATH
+
+Downloading pyton:
+https://www.python.org/downloads/
+
+intall the following libraries:
+
+open the cmd and run each commad of the following:
+
+pip install selenium
+
+pip install pandas
+
+pip install imageio
+
+pip intall pillow
+
+after installing all the required libraries you can finally use the scraper, just click on YouTube_scraper.exe 
+
+NOTE:
+
+your chrome version might differ from the chromedriver which is provided on the scraper folder
+
+please check yu chrome version from Settings -> Apps, and look up for the same version and download it from the following link:
+https://chromedriver.chromium.org/downloads

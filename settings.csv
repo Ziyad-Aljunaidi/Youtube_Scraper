@@ -1,2 +1,2 @@
-chromedriver_dir,results_file_dir,imgs_file
-D:\Work\David Berg - Youtube Scraper\chromedriver,.\Results_CSVs,.\imgs
+chromedriver_dir,results_file_dir
+.\chromedriver,.\Results_CSVs
