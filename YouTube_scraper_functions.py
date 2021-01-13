@@ -20,6 +20,7 @@ import os
 #https://www.youtube.com/c/baldandbankrupt/videos
 #https://www.youtube.com/user/TheVickshow/videos
 #https://www.youtube.com/channel/UCBKCz2XLWQgDmHHfJuyoi4Q/videos
+#
 
 df = pd.read_csv('settings.csv')
 chromedriver_dir = df['chromedriver_dir']
@@ -38,24 +39,33 @@ chromedriver = chromedriver_dir[0]
 driver = webdriver.Chrome(chromedriver)
 wait = WebDriverWait(driver,1)
 
-url = input('Please enter a URL: ')
-driver.get(url)
 
-channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
-print('Channel Name: ', channel_name)
 
-#Creating a Folder
-try:
-    os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
+def get_url(url):
+    driver.get(url)
 
-    os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
 
-    os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
-except FileExistsError:
-    print('Directory existed.')
+#channel_name = ''
+#print_name()
+def get_chnl_name():
+    global channel_name
+    channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
+    print('Channel Name: ', channel_name)
+
+    #Creating a Folder
+    try:
+        os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
+        print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
+
+        os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
+        print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+
+        os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
+        print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+    except FileExistsError:
+        print('Directory existed.')
+    
+
 
 def collect_vids_urls(chnl_url):
     counter = 1
@@ -177,6 +187,13 @@ def get_thumbnail(counter):
 
 
 #Runing the Required Functions
-collect_vids_urls(url)
-collect_vid_data(channel_name)
-get_thumbnail(count)
+def run_functions(url_link):
+    #url = input('Please enter a URL: ')
+    #get_url()
+    driver.get(url_link)
+    get_chnl_name()
+    collect_vids_urls(url_link)
+    collect_vid_data(channel_name)
+    get_thumbnail(count)
+
+#run_functions()
