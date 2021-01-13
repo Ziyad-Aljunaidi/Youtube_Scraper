@@ -13,6 +13,9 @@ import pandas as pd
 import csv
 import time
 import os
+import numpy as np
+import matplotlib.pyplot as plt  # To visualize
+from sklearn.linear_model import LinearRegression
 
 #TESTING LINKS
 #https://www.youtube.com/c/LinusTechTips/videos
@@ -34,29 +37,26 @@ ff_dt_string = f_dt_string.replace(':','-')
 #Scrolling javascript executable code.
 javascript_2 = "window.scrollBy(0, 70);"
 
-chromedriver = chromedriver_dir[0]
-driver = webdriver.Chrome(chromedriver)
-wait = WebDriverWait(driver,1)
-
-url = input('Please enter a URL: ')
-driver.get(url)
-
-
-channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
-print('Channel Name: ', channel_name)
-
-#Creating a Folder
-try:
-    os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
-
-    os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
-
-    os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
-    print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
-except FileExistsError:
-    print('Directory existed.')
+#chromedriver = chromedriver_dir[0]
+#driver = webdriver.Chrome(chromedriver)
+#wait = WebDriverWait(driver,1)
+#url = input('Please enter a URL: ')
+#driver.get(url)
+#channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
+#print('Channel Name: ', channel_name)
+#
+##Creating a Folder
+#try:
+#    os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
+#    print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
+#
+#    os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
+#    print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+#
+#    os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
+#    print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+#except FileExistsError:
+#    print('Directory existed.')
 
 def collect_vids_urls(chnl_url):
     global total_vids_counter
@@ -116,6 +116,8 @@ def collect_vid_data(channel_name):
         
         v_description =  wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#description yt-formatted-string"))).text
         v_view = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#count span"))).text
+        v_view = v_view.replace(' views', '')
+        v_view = v_view.replace(',', '')
         #v_date = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#date yt-formatted-string")))
         v_likes = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#top-level-buttons > ytd-toggle-button-renderer:nth-child(1)"))).text
         v_dislikes = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#top-level-buttons > ytd-toggle-button-renderer:nth-child(2)"))).text
@@ -179,11 +181,28 @@ def get_thumbnail(counter):
 
 
 
-#Runing the Required Functions
-collect_vids_urls(url)
-collect_vid_data(channel_name)
+##Runing the Required Functions
+#collect_vids_urls(url)
+#collect_vid_data(channel_name)
+##
+###Quiting Chrome Webdriver
+#driver.quit()
+#get_thumbnail(count)
 
-#Quiting Chrome Webdriver
-driver.quit()
-get_thumbnail(count)
+#'{}\{}.csv'.format(channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL")
+data = pd.read_csv('{}\{}.csv'.format('Night Runners 13-01-2021 18-30-48', 'Night Runners 13-01-2021 18-30-48 FINAL'))  # load data set
+X = data.iloc[:, 3].values.reshape(-1, 1)  # values converts it into a numpy array
+Y = data.iloc[:, 7].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+linear_regressor = LinearRegression()  # create object for the class
+linear_regressor.fit(X, Y)  # perform linear regression
+Y_pred = linear_regressor.predict(X)  # make predictions
 
+plt.scatter(X, Y)
+plt.plot(X, Y_pred, color='red')
+plt.xlabel('Views')
+plt.ylabel('Capital Ratio')
+plt.gcf()
+
+plt.draw()
+plt.savefig('ratioviedsssssssws.png',dpi=100)
+plt.show()
