@@ -41,6 +41,7 @@ wait = WebDriverWait(driver,1)
 url = input('Please enter a URL: ')
 driver.get(url)
 
+
 channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
 print('Channel Name: ', channel_name)
 
@@ -58,30 +59,32 @@ except FileExistsError:
     print('Directory existed.')
 
 def collect_vids_urls(chnl_url):
-    counter = 1
+    global total_vids_counter
+    total_vids_counter = 1
     #driver.get(chnl_url)
     #Creating the CSV File
     csv_file = open('{}\{}.csv'.format(channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Channel Name', 'Video URL'])
     
-
     while True:
         try:
-            #vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(counter))
-            vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(counter))))
+            vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))
+            vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))))
             url_vid = vid.find_element_by_css_selector('#video-title')
             url = url_vid.get_attribute('href')
-            print(url)
+            print(url , '  ' , total_vids_counter)
             csv_writer.writerow([channel_name , url])
-            counter+=1
+            total_vids_counter+=1
             driver.execute_script(javascript_2)
-            
-        except:
-            print('done')
-            break
-        time.sleep(0.1)
 
+        except:
+            print('Scraping Videos Libraries Completed!')
+            print()
+            total_vids_counter-=1
+            break
+            time.sleep(0.1)
+        
 def collect_vid_data(channel_name):
 
     #Creating the semi-final CSV File for saving the NEW scraped data
@@ -93,7 +96,7 @@ def collect_vid_data(channel_name):
     data_file = pd.read_csv('{}\{}.csv'.format(channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string))
     video_url = data_file['Video URL']
     
-    counter = 0
+    counter = 1
     for url in video_url:
         parsed = urlparse.urlparse(url)
         video_id = parse_qs(parsed.query)['v']
@@ -124,14 +127,14 @@ def collect_vid_data(channel_name):
         print('Title Captial Ratio: ',formated_captial_ratio,  ' | ' ,'# Of Chars In Title: ', len(v_title))
         print('# Of Chars In Description: ', len(v_description))
         print('Views: ', v_view, ' | ' , 'Likes: ', v_likes, ' | ', 'Disikes: ', v_dislikes)
+        print( counter , " of " , total_vids_counter , " scraped.")
         print('-----------------------------------')
- 
+        counter += 1
         csv_writer.writerow([channel_name, url, video_id[0], v_view, v_likes, v_dislikes, v_title, formated_captial_ratio, len(v_title), len(v_description)])
 
         
-count = 0
-
 #Getting the thumbnail image and save it for RGB breakdown.
+count = 0
 def get_thumbnail(counter):
     
     csv_file = open('{}\{}.csv'.format(channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL"),'w', encoding='utf-8', newline='')
@@ -168,9 +171,9 @@ def get_thumbnail(counter):
         r = pic[100, 50, 0]
         g = pic[100, 50, 1]
         b = pic[100, 50, 2]
-        
+        img_counter = counter + 1
         print('Max RGB: ', max_rgb , 'Min RGB: ', min_rgb, 'R: ', r, 'G: ', g, 'B: ', b)
-        print(counter)
+        print(img_counter, ' of ', total_vids_counter)
         csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], max_rgb, min_rgb, r, g, b])
         counter += 1
 
@@ -179,4 +182,8 @@ def get_thumbnail(counter):
 #Runing the Required Functions
 collect_vids_urls(url)
 collect_vid_data(channel_name)
+
+#Quiting Chrome Webdriver
+driver.quit()
 get_thumbnail(count)
+
