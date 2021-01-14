@@ -37,26 +37,26 @@ ff_dt_string = f_dt_string.replace(':','-')
 #Scrolling javascript executable code.
 javascript_2 = "window.scrollBy(0, 70);"
 
-#chromedriver = chromedriver_dir[0]
-#driver = webdriver.Chrome(chromedriver)
-#wait = WebDriverWait(driver,1)
-#url = input('Please enter a URL: ')
-#driver.get(url)
-#channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
-#print('Channel Name: ', channel_name)
-#
-##Creating a Folder
-#try:
-#    os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
-#    print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
-#
-#    os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
-#    print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
-#
-#    os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
-#    print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
-#except FileExistsError:
-#    print('Directory existed.')
+chromedriver = chromedriver_dir[0]
+driver = webdriver.Chrome(chromedriver)
+wait = WebDriverWait(driver,1)
+url = input('Please enter a URL: ')
+driver.get(url)
+channel_name = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="channel-name"]'))).text
+print('Channel Name: ', channel_name)
+
+#Creating a Folder
+try:
+    os.mkdir('./{}'.format(channel_name + " " + ff_dt_string))
+    print ('Directory, {}'.format(channel_name + " " + ff_dt_string) + ' created..')
+
+    os.mkdir('./{}/Images'.format(channel_name + " " + ff_dt_string))
+    print ('Directory, {}/Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+
+    os.mkdir('./{}/Cropped Images'.format(channel_name + " " + ff_dt_string))
+    print ('Directory, {}/ Cropped Images'.format(channel_name + " " + ff_dt_string) + ' created..')
+except FileExistsError:
+    print('Directory existed.')
 
 def collect_vids_urls(chnl_url):
     global total_vids_counter
@@ -69,7 +69,7 @@ def collect_vids_urls(chnl_url):
     
     while True:
         try:
-            vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))
+            #vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))
             vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))))
             url_vid = vid.find_element_by_css_selector('#video-title')
             url = url_vid.get_attribute('href')
