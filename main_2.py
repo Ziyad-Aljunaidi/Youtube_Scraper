@@ -24,6 +24,9 @@ from tkinter import filedialog
 
 class Redirect():
 
+    def flush(self):
+        pass
+
     def __init__(self, widget):
         self.widget = widget
 
@@ -184,12 +187,13 @@ def collect_vid_data(channel_name):
 count = 0
 
 #Getting the thumbnail image and save it for RGB breakdown.
-def get_thumbnail(counter):
-    
+def get_thumbnail(counter): 
+    global file_name2
+    file_name2 = '{}\{}.csv'.format(channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL")
     csv_file = open('{}\{}.csv'.format(channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
-    file_name = '{}\{}.csv'.format(channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL")
+    
     df_read = pd.read_csv('{}\{}.csv'.format(channel_name+" "+ff_dt_string,channel_name+" "+ ff_dt_string + " SEMI-FINAL"))
     chnl_name = df_read['Channel Name']
     vid_url = df_read['Video URL']
@@ -307,10 +311,15 @@ def opt2(value):
     elif value == "Green Value":
         print("Green Value")
         y_val = 14
+    else:
+        pass
 
 def opts():
-    data = pd.read_csv(file_name)  # load data set
-   
+    try:
+        data = pd.read_csv(file_name)  # load data set
+    except:
+        data = pd.read_csv(file_name2)
+        
     X = data.iloc[:, y_val].values.reshape(-1, 1)  # values converts it into a numpy array
     Y = data.iloc[:, x_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
     linear_regressor = LinearRegression()  # create object for the class
@@ -346,7 +355,7 @@ def verify():
         open_reg_btn["state"] = "normal"
         var1["state"] = "normal"
         var2["state"] = "normal"
-        
+
     print(' Scraping Completed Successfully!')
     driver.quit()
 
