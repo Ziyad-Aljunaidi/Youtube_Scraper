@@ -1,7 +1,9 @@
 import tkinter as tk
 import numpy as np
+from numpy.polynomial.polynomial import polyfit
 #import YouTube_scraper_functions as YT
 import matplotlib.pyplot as plt  # To visualize
+from matplotlib import pyplot
 from sklearn.linear_model import LinearRegression
 from tkinter.ttk import *
 from tkinter import HORIZONTAL
@@ -234,83 +236,102 @@ def get_thumbnail(counter):
 
 def opt1(value):
     global x_val
+    global x_val_name
 
     if value == "Views":
         print("Views")
         x_val = 3
+        x_val_name = "Views"
 
     elif value == "Likes":
         print("Likes")
         x_val = 4
+        x_val_name = "Likes"
 
     elif value == "Dislikes":
         print("Dislikes")
         x_val = 5
+        x_val_name = "Disikes"
 
     elif value == "Title Capital Ratio":
         print("Title Capital Ratio")
         x_val = 7
-        
+        x_val_name = "Title Capital Ratio"
+
     elif value == "# of Title Chars":
         print("# of Title Chars")
         x_val = 8
+        x_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("# of Description Chars")
         x_val = 9
+        x_val_name = "# of Description Chars"
 
     elif value == "Red Value":
         print("Red Value")
         x_val = 12
+        x_val_name = "Red Values"
 
     elif value == "Blue Value":
         print("Blue Value")
         x_val = 13
+        x_val_name = "Blue Value"
 
     elif value == "Green Value":
         print("Green Value")
         x_val = 14
-    
+        x_val_name = "Green Value"
 
 def opt2(value):
 
     global y_val
+    global y_val_name
 
     if value == "Views":
-        print("Views")
+        print("Views  y")
         y_val = 3
+        y_val_name = "Views"
 
     elif value == "Likes":
         print("Likes")
         y_val = 4
+        y_val_name = "Likes"
 
     elif value == "Dislikes":
-        print("Dislikes")
+        print("Dislikes y")
         y_val = 5
+        y_val_name = "Dislikes"
 
     elif value == "Title Capital Ratio":
         print("Title Capital Ratio")
         y_val = 7
-        
+        y_val_name = "Title Capital Ratio"  
+
     elif value == "# of Title Chars":
         print("# of Title Chars")
         y_val = 8
+        y_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("# of Description Chars")
         y_val = 9
+        y_val_name = "# of Description Chars"
 
     elif value == "Red Value":
         print("Red Value")
         y_val = 12
+        y_val_name = "Red Value"
 
     elif value == "Blue Value":
         print("Blue Value")
         y_val = 13
+        y_val_name = "Blue Value"
 
     elif value == "Green Value":
         print("Green Value")
         y_val = 14
+        y_val_name = "Green Value"    
     else:
         pass
 
@@ -320,15 +341,39 @@ def opts():
     except:
         data = pd.read_csv(file_name2)
         
-    X = data.iloc[:, y_val].values.reshape(-1, 1)  # values converts it into a numpy array
-    Y = data.iloc[:, x_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+    X = data.iloc[:, x_val].values.reshape(-1, 1)  # values converts it into a numpy array
+    Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+    Z = data.iloc[:, 13].values.reshape(-1,1)
+    H = data.iloc[:, 14].values.reshape(-1,1)
     linear_regressor = LinearRegression()  # create object for the class
     linear_regressor.fit(X, Y)  # perform linear regression
     Y_pred = linear_regressor.predict(X)  # make predictions
-    plt.scatter(X, Y)
-    plt.plot(X, Y_pred, color='red')
-    plt.xlabel('Views')
-    plt.ylabel('Capital Ratio')
+    Z_pred = linear_regressor.predict(Z)
+    H_pred = linear_regressor.predict(H)
+
+    #pyplot.legend(["blue", "green"], bbox_to_anchor=(0.75, 1.15), ncol=2)
+    plt.scatter(X, Y, label=x_val_name)
+    plt.plot(X, Y_pred)
+    #plt.plot(X, Z_pred)
+    #plt.plot(X, H_pred)
+    plt.scatter(Z, Y, label="Blue Value")
+
+    linear_regressor.fit(Z, Y)
+    Z_pred = linear_regressor.predict(Z)
+    plt.plot(Z, Z_pred)
+
+    linear_regressor.fit(H, Y)
+    H_pred = linear_regressor.predict(H)
+    plt.plot(H, H_pred)
+    plt.scatter(H, Y,  label=" Green Value")
+    #plt.xlabel(x_val_name)
+    
+    #plt.plot(np.unique(X), np.poly1d(np.polyfit(X, Y, 1))(np.unique(X)))
+    
+    #plt.plot(H, H_pred, color='green')
+    plt.ylabel(y_val_name)
+
+    plt.legend(loc='upper right')
     plt.gcf()
     plt.draw()
     plt.savefig('ratioviedsssssssws.png',dpi=100)
