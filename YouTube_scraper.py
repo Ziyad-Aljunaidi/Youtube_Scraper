@@ -1,10 +1,15 @@
+from distutils.core import setup # Need this to handle modules
+import py2exe 
 import tkinter as tk
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
+import scipy.spatial.transform._rotation_groups
+
 #import YouTube_scraper_functions as YT
 import matplotlib.pyplot as plt  # To visualize
 from matplotlib import pyplot
 from sklearn.linear_model import LinearRegression
+import sklearn.utils._weight_vector
 from tkinter.ttk import *
 from tkinter import HORIZONTAL
 from urllib.request import urlretrieve
@@ -38,6 +43,7 @@ class Redirect():
 
 window = tk.Tk()
 window.title("Youtube Scraper")
+window.iconbitmap("YouTubeScraper.ico")
 
 OPTIONS = [
     "Views",
@@ -84,6 +90,7 @@ chromedriver = chromedriver_dir[0]
 
 
 
+
 def get_chnl_name():
     window.update()
     global channel_name
@@ -92,6 +99,9 @@ def get_chnl_name():
 
     #Creating a Folder
     try:
+        if not os.path.exists(results_file_dir[0]):
+            os.makedirs(results_file_dir[0])
+
         os.mkdir('./{}/{}'.format(results_file_dir[0],channel_name + " " + ff_dt_string))
         print ('Directory, {}/{}'.format(results_file_dir[0],channel_name + " " + ff_dt_string) + ' created..')
 
@@ -304,7 +314,10 @@ def optx1(value):
         print("X1 = Green")
         x1_val = 14
         x1_val_name = "Green"
-
+    else:
+        print("Please Select A variable")
+        pass
+    
 #Option for X2
 def optx2(value):
     global x2_val
@@ -354,6 +367,9 @@ def optx2(value):
         print("X2 = Green")
         x2_val = 14
         x2_val_name = "Green"
+    else:
+        print("Please Select A variable")
+        pass
 
 #Option for X3
 def optx3(value):
@@ -404,14 +420,17 @@ def optx3(value):
         print("X3 = Green")
         x3_val = 14
         x3_val_name = "Green"
+    else:
+        print("Please Select A variable")
+        pass
 
 #Option for Y
 y_val = 3 #DEFAULT for VIEWS
 y_val_name = "Views" #DEFAULT for VIEWS
 
 def opty(value):
-    #global y_val
-    #global y_val_name
+    global y_val
+    global y_val_name
 
     if value == "Views":
         print("Y = Views")
@@ -458,6 +477,7 @@ def opty(value):
         y_val = 14
         y_val_name = "Green"    
     else:
+        print("Please Select A variable")
         pass
 
 
