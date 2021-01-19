@@ -54,19 +54,21 @@ OPTIONS = [
     "# of Description Chars",
     "Red",
     "Blue",
-    "Green"
+    "Green",
+    "NONE"
+    
 ] 
 
 url_text = tk.StringVar(window)
 
 variable_x1 = tk.StringVar(window)
-variable_x1.set('X1 value') # default value
+variable_x1.set(OPTIONS[9]) # default value
 
 variable_x2 = tk.StringVar(window)
-variable_x2.set('X2 value') # default value
+variable_x2.set(OPTIONS[9]) # default value
 
 variable_x3 = tk.StringVar(window)
-variable_x3.set('X3 value') # default value
+variable_x3.set(OPTIONS[9]) # default value
 
 variable_y = tk.StringVar(window)
 variable_y.set(OPTIONS[0]) # default value
@@ -123,14 +125,23 @@ def collect_vids_urls(chnl_url):
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string, channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Channel Name', 'Video URL'])
-    
-
     while True:
+        
         try:
             #vid = driver.find_element_by_xpath('//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(counter))
             vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))))
             url_vid = vid.find_element_by_css_selector('#video-title')
             url = url_vid.get_attribute('href')
+
+            try:
+                if video_recent_link[0] == url:
+                    print('Scraping NEW Videos URLs Completed')
+                    break
+                else:
+                    pass
+            except:
+                pass
+
             print(url, ' ', total_vids_counter)
             csv_writer.writerow([channel_name , url])
             total_vids_counter+=1
@@ -139,7 +150,7 @@ def collect_vids_urls(chnl_url):
             
         except:
             print()
-            print('Scraping Videos Libraries Completed!')
+            print('Scraping Videos URL Completed!')
             
             total_vids_counter-=1
             break
@@ -315,13 +326,19 @@ def optx1(value):
         x1_val = 14
         x1_val_name = "Green"
     else:
-        print("Please Select A variable")
+        print("X1 = NONE")
+        x1_val=None
         pass
     
 #Option for X2
 def optx2(value):
     global x2_val
     global x2_val_name
+    if multi_var["state"] == "disabled":
+        multi_var["state"] ="normal"
+        uni_var["state"] = "normal"
+    else:
+        pass
 
     if value == "Views":
         print("X2 = Views")
@@ -368,13 +385,19 @@ def optx2(value):
         x2_val = 14
         x2_val_name = "Green"
     else:
-        print("Please Select A variable")
+        print("X2 = NONE")
+        x2_val=None
         pass
 
 #Option for X3
 def optx3(value):
     global x3_val
     global x3_val_name
+    if multi_var["state"] == "disabled":
+        multi_var["state"] ="normal"
+        uni_var["state"] = "normal"
+    else:
+        pass
 
     if value == "Views":
         print("X3 = Views")
@@ -421,7 +444,8 @@ def optx3(value):
         x3_val = 14
         x3_val_name = "Green"
     else:
-        print("Please Select A variable")
+        print("X3 = NONE")
+        x3_val = None
         pass
 
 #Option for Y
@@ -431,7 +455,8 @@ y_val_name = "Views" #DEFAULT for VIEWS
 def opty(value):
     global y_val
     global y_val_name
-
+    
+    
     if value == "Views":
         print("Y = Views")
         y_val = 3
@@ -477,69 +502,149 @@ def opty(value):
         y_val = 14
         y_val_name = "Green"    
     else:
-        print("Please Select A variable")
+        y_val == None
+        print("Y = NONE")
         pass
 
 
 def opts():
+
     try:
         data = pd.read_csv(file_name)  # load data set
     except:
         data = pd.read_csv(file_name2)
+    
+    try:
+        try:
+            
+            X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
+            X2 = data.iloc[:, x2_val].values.reshape(-1,1)
+            X3 = data.iloc[:, x3_val].values.reshape(-1,1)
+            Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+            linear_regressor = LinearRegression()  # create object for the class
+
+            if val_var.get() == 1:
+                linear_regressor.fit(X1, Y)  # perform linear regression
+                X1_pred = linear_regressor.predict(X1) # make predictions
+                plt.scatter(X1, Y, label=x1_val_name)
+                plt.plot(X1, X1_pred)
+
+                linear_regressor.fit(X2, Y)
+                X2_pred = linear_regressor.predict(X2)
+                plt.scatter(X2, Y, label=x2_val_name)
+                plt.plot(X2, X2_pred)
+
+                linear_regressor.fit(X3, Y)
+                X3_pred = linear_regressor.predict(X3)
+                plt.scatter(X3, Y, label=x3_val_name)
+                plt.plot(X3, X3_pred)
+
+                plt.ylabel(y_val_name)
+
+                plt.legend(loc='upper right')
+                #plt.gcf()
+                #plt.draw()
+                #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+                plt.show()
+
+                print('multivariate')
+
+
+            else:
+                xt = (X1 + X2 + X3)/3
+                linear_regressor.fit(xt, Y)  # perform linear regression
+                Y_pred = linear_regressor.predict(xt)  # make predictions
+                X2_pred = linear_regressor.predict(X2)
+                X3_pred = linear_regressor.predict(X3)
+                plt.scatter(X1, Y, label=x1_val_name)
+                plt.plot(xt, Y_pred, color = 'red')
+                plt.scatter(X2, Y, label=x2_val_name)
+                plt.scatter(X3, Y,  label=x3_val_name)
+                plt.ylabel(y_val_name)
+
+                plt.legend(loc='upper right')
+               #plt.gcf()
+               #plt.draw()
+               #plt.savefig('ratioviedsssssssws.png',dpi=100)
+                plt.show()
+                print('univariate')
+        except:
+            try:
+                
+                X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
+                X2 = data.iloc[:, x2_val].values.reshape(-1,1)
+                Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+                linear_regressor = LinearRegression()  # create object for the class
+
+                if val_var.get() == 1:
+                    linear_regressor.fit(X1, Y)  # perform linear regression
+                    X1_pred = linear_regressor.predict(X1) # make predictions
+                    plt.scatter(X1, Y, label=x1_val_name)
+                    plt.plot(X1, X1_pred)
+                    linear_regressor.fit(X2, Y)
+                    X2_pred = linear_regressor.predict(X2)
+                    plt.scatter(X2, Y, label=x2_val_name)
+                    plt.plot(X2, X2_pred)
+                    plt.ylabel(y_val_name)
+                    plt.legend(loc='upper right')
+                    #plt.gcf()
+                    #plt.draw()
+                    #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+                    plt.show()
+
+                    print('multivariate')
+                else:
+                    xt = (X1 + X2)/2
+                    linear_regressor.fit(xt, Y)  # perform linear regression
+                    Y_pred = linear_regressor.predict(xt)  # make predictions
+                    X2_pred = linear_regressor.predict(X2)
+                    plt.scatter(X1, Y, label=x1_val_name)
+                    plt.plot(xt, Y_pred, color = 'red')
+                    plt.scatter(X2, Y, label=x2_val_name)
+                    plt.ylabel(y_val_name)
+                    plt.legend(loc='upper right')
+                   #plt.gcf()
+                   #plt.draw()
+                   #plt.savefig('ratioviedsssssssws.png',dpi=100)
+                    plt.show()
+                    print('univariate')
+                    
+            except:
+                
+                X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
+                Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
+                linear_regressor = LinearRegression()  # create object for the class
         
-    X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
-    X2 = data.iloc[:, x2_val].values.reshape(-1,1)
-    X3 = data.iloc[:, x3_val].values.reshape(-1,1)
-    Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
-    linear_regressor = LinearRegression()  # create object for the class
-
-    if val_var.get() == 1:
-        linear_regressor.fit(X1, Y)  # perform linear regression
-        X1_pred = linear_regressor.predict(X1) # make predictions
-        plt.scatter(X1, Y, label=x1_val_name)
-        plt.plot(X1, X1_pred)
-
-        linear_regressor.fit(X2, Y)
-        X2_pred = linear_regressor.predict(X2)
-        plt.scatter(X2, Y, label=x2_val_name)
-        plt.plot(X2, X2_pred)
-
-        linear_regressor.fit(X3, Y)
-        X3_pred = linear_regressor.predict(X3)
-        plt.scatter(X3, Y, label=x3_val_name)
-        plt.plot(X3, X3_pred)
-
-        plt.ylabel(y_val_name)
-
-        plt.legend(loc='upper right')
-        #plt.gcf()
-        #plt.draw()
-        #plt.savefig('ratioviedsssssssws1.png',dpi=100)
-        plt.show()
-
-        print('multivariate')
+                linear_regressor.fit(X1, Y)  # perform linear regression
+                X1_pred = linear_regressor.predict(X1) # make predictions
+                plt.scatter(X1, Y, label=x1_val_name)
+                plt.plot(X1, X1_pred)
 
         
-    else:
-        xt = (X1 + X2 + X3)/3
-        linear_regressor.fit(xt, Y)  # perform linear regression
-        Y_pred = linear_regressor.predict(xt)  # make predictions
-        X2_pred = linear_regressor.predict(X2)
-        X3_pred = linear_regressor.predict(X3)
-        plt.scatter(X1, Y, label=x1_val_name)
-        plt.plot(xt, Y_pred, color = 'red')
-        plt.scatter(X2, Y, label=x2_val_name)
-        plt.scatter(X3, Y,  label=x3_val_name)
-        plt.ylabel(y_val_name)
+                plt.ylabel(y_val_name)
+        
+                plt.legend(loc='upper right')
+                #plt.gcf()
+                #plt.draw()
+                #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+                plt.show()
+    except:
+        print('Please Select X Vriables')
 
-        plt.legend(loc='upper right')
-       #plt.gcf()
-       #plt.draw()
-       #plt.savefig('ratioviedsssssssws.png',dpi=100)
-        plt.show()
-        print('univariate')
+
 
 def verify():
+    global data
+    global video_recent_link
+    try:
+        data = pd.read_csv(file_name)
+        video_recent_link = data['Video URL']
+        print('Starting a new videos only scraping process')
+        print(video_recent_link[0])
+    except:
+        print('Starting a whole new scraping process')
+
+        
     global wait,driver
     global url_link
     driver = webdriver.Chrome(chromedriver)
@@ -549,6 +654,7 @@ def verify():
     url_link = url_val.get()
     
     driver.get(url_link)
+
     #window.update()
     get_chnl_name()
     #window.update()
@@ -556,14 +662,21 @@ def verify():
     collect_vid_data(channel_name)
     get_thumbnail(count)
 
+    try:
+        combine_csv = pd.read_csv(file_name)
+        combine_csv.to_csv(file_name2, index=False, mode='a', header=False)
+    except:
+        pass
+
     if open_reg_btn["state"] == "disabled":
         open_reg_btn["state"] = "normal"
         var_x1["state"] = "normal"
         var_x2["state"] = "normal"
         var_x3["state"] = "normal"
         var_y["state"] = "normal"
-        multi_var["state"] = "normal"
-        uni_var["state"] = "normal"
+        #multi_var["state"] = "normal"
+        #uni_var["state"] = "normal"
+
 
 
     print(' Scraping Completed Successfully!')
@@ -580,8 +693,8 @@ def opn_file():
         var_x2["state"] = "normal"
         var_x3["state"] = "normal"
         var_y["state"] = "normal"
-        multi_var["state"] = "normal"
-        uni_var["state"] = "normal"
+        #multi_var["state"] = "normal"
+        #uni_var["state"] = "normal"
 
 frame = tk.Frame(master=window, width=480 ,height=580 )
 
@@ -665,3 +778,4 @@ window.mainloop()
 #https://www.youtube.com/c/baldandbankrupt/videos
 #https://www.youtube.com/user/TheVickshow/videos
 #https://www.youtube.com/channel/UCBKCz2XLWQgDmHHfJuyoi4Q/videos
+#header=False,encoding='utf-8-sig'
