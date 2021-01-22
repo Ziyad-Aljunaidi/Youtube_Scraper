@@ -1,10 +1,10 @@
 from distutils.core import setup # Need this to handle modules
-import py2exe 
+import threading
 import tkinter as tk
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
 import scipy.spatial.transform._rotation_groups
-
+import re
 #import YouTube_scraper_functions as YT
 import matplotlib.pyplot as plt  # To visualize
 from matplotlib import pyplot
@@ -18,6 +18,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By 
 from selenium.webdriver.support.ui import WebDriverWait 
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
 from datetime import datetime
@@ -28,6 +29,7 @@ import pandas as pd
 import csv
 import os
 from tkinter import filedialog
+
 
 class Redirect():
 
@@ -49,9 +51,12 @@ OPTIONS = [
     "Views",
     "Likes",
     "Dislikes",
+    "Video Length",
     "Title Capital Ratio",
     "# of Title Chars",
     "# of Description Chars",
+    "# of Links",
+    "Comments",
     "Red",
     "Blue",
     "Green",
@@ -62,13 +67,13 @@ OPTIONS = [
 url_text = tk.StringVar(window)
 
 variable_x1 = tk.StringVar(window)
-variable_x1.set(OPTIONS[9]) # default value
+variable_x1.set(OPTIONS[12]) # default value
 
 variable_x2 = tk.StringVar(window)
-variable_x2.set(OPTIONS[9]) # default value
+variable_x2.set(OPTIONS[12]) # default value
 
 variable_x3 = tk.StringVar(window)
-variable_x3.set(OPTIONS[9]) # default value
+variable_x3.set(OPTIONS[12]) # default value
 
 variable_y = tk.StringVar(window)
 variable_y.set(OPTIONS[0]) # default value
@@ -88,9 +93,14 @@ ff_dt_string = f_dt_string.replace(':','-')
 
 #Scrolling javascript executable code.
 javascript_2 = "window.scrollBy(0, 70);"
-chromedriver = chromedriver_dir[0]
 
+chrome_options = Options()
+chrome_options.add_argument("--start-maximized")
+chrome_options.add_argument('--headless')
 
+chromedriver = webdriver.Chrome(executable_path=chromedriver_dir[0], options=chrome_options) 
+driver=chromedriver
+wait = WebDriverWait(driver,3)
 
 
 def get_chnl_name():
@@ -116,15 +126,16 @@ def get_chnl_name():
         print('Directory existed.')
     window.update()
 
+
 def collect_vids_urls(chnl_url):
     window.update()
     global total_vids_counter
     total_vids_counter = 1
-    #driver.get(chnl_url)
+
     #Creating the CSV File
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string, channel_name+" "+ff_dt_string),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL'])
+    csv_writer.writerow(['Channel Name', 'Video URL' , 'Video Length'])
     while True:
         
         try:
@@ -132,6 +143,31 @@ def collect_vids_urls(chnl_url):
             vid = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="items"]/ytd-grid-video-renderer[{}]'.format(total_vids_counter))))
             url_vid = vid.find_element_by_css_selector('#video-title')
             url = url_vid.get_attribute('href')
+
+            try:
+                vid_len = wait.until(EC.presence_of_element_located((By.XPATH,'/html/body/ytd-app/div/ytd-page-manager/ytd-browse/ytd-two-column-browse-results-renderer/div[1]/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-grid-renderer/div[1]/ytd-grid-video-renderer[{}]/div[1]/ytd-thumbnail/a/div[1]/ytd-thumbnail-overlay-time-status-renderer/span'.format(total_vids_counter)))).text
+                vid_len_list = vid_len.split(':')
+                vid_len_list.reverse()
+                
+
+                try:
+                    secs = int(vid_len_list[0])
+                except:
+                    secs = 0
+
+                try:
+                    mins= int(vid_len_list[1])*60
+                except:
+                    mins = 0
+
+                try:
+                    hrs = int(vid_len_list[2])*60*60
+                except:
+                    hrs = 0
+                    vid_length = secs+mins+hrs
+            except:
+                #Probably tried to scrape a live stream
+                vid_length = 0
 
             try:
                 if video_recent_link[0] == url:
@@ -143,7 +179,8 @@ def collect_vids_urls(chnl_url):
                 pass
 
             print(url, ' ', total_vids_counter)
-            csv_writer.writerow([channel_name , url])
+            print('Video Length: ', vid_length)
+            csv_writer.writerow([channel_name , url, vid_length])
             total_vids_counter+=1
             driver.execute_script(javascript_2)
             window.update()
@@ -154,54 +191,73 @@ def collect_vids_urls(chnl_url):
             
             total_vids_counter-=1
             break
-            time.sleep(0.1)
+
 
 def collect_vid_data(channel_name):
     window.update()
     #Creating the semi-final CSV File for saving the NEW scraped data
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string + " SEMI-FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL','Video ID', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars'])
+    csv_writer.writerow(['Channel Name', 'Video URL','Video ID', 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments'])
 
     #reading the URLs scraped data
     data_file = pd.read_csv('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string))
     video_url = data_file['Video URL']
+    video_len = data_file['Video Length']
     
     counter = 1
+    counter_vid_len = 0
     for url in video_url:
         window.update()
         parsed = urlparse.urlparse(url)
         video_id = parse_qs(parsed.query)['v']
         driver.get(url)
-        time.sleep(1)
-        v_title = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"h1.title yt-formatted-string"))).text
+        v_title = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#container > h1 > yt-formatted-string"))).text
+        #v_title = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"h1.title yt-formatted-string"))).text
         remove_spaces = v_title.replace(' ', '')
         cap_letters = 0
+
         for letter in remove_spaces:
             if letter.isupper():
                 cap_letters += 1
             else:
                 pass
+        try:
 
-        captial_ratio = cap_letters/len(remove_spaces)
-        formated_captial_ratio = "{:.2f}".format(captial_ratio)
-        
+            captial_ratio = cap_letters/len(remove_spaces)
+            formated_captial_ratio = "{:.2f}".format(captial_ratio)
+        except:
+            formated_captial_ratio='0'
+            print(cap_letters, ' ', len(remove_spaces))
 
         v_description =''
+
+
         try:
             more_btn = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#more")))
             more_btn.click()
 
             v_des = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, '#description')))
+
             for v in v_des:
                 v.text
                 v_description+=v.text
+
+            less_btn =  wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#less')))
+            less_btn.click()
+        except:
+            v_description = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#description > yt-formatted-string'))).text
+            pass
+
+        try:
+            #regualr expression to extract links from the description
+            links_in_des = re.findall('http[s]?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', v_description) 
         except:
             pass
 
         v_view = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#count span"))).text
-        v_view = v_view.replace(' views', '')
-        v_view = v_view.replace(',', '')
+        v_view_list = v_view.split()
+        v_view = v_view_list[0].replace(',', '')
         #v_date = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"div#date yt-formatted-string")))
         v_likes = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"#top-level-buttons > ytd-toggle-button-renderer:nth-child(1)"))).text
         v_likes = v_likes.replace('.','')
@@ -213,6 +269,26 @@ def collect_vid_data(channel_name):
         v_dislikes = v_dislikes.replace('K', '000')
         v_dislikes = v_dislikes.replace('M', '000000')
 
+        #driver.execute_script("window.scrollBy(0, 2200);")
+        #print('testing comments appearance')
+
+        try:
+            driver.execute_script("window.scrollBy(0, 2200);")
+            v_comments= wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#count > yt-formatted-string'))).text
+            v_comments = v_comments.replace(' Comments','')
+            v_comments = v_comments.replace(',', '')
+        except:
+            time.sleep(1)
+            try:
+                driver.execute_script("window.scrollBy(0, 2200);")
+                v_comments= wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#count > yt-formatted-string'))).text
+                v_comments = v_comments.replace(' Comments','') 
+                v_comments = v_comments.replace(',', '')
+            except:
+                print('Cannot get # of Comments.')
+                comments = 0
+
+
         #Printing the results
         print()
         print('Video URL: ', url)
@@ -220,26 +296,32 @@ def collect_vid_data(channel_name):
         print('Title: ', v_title )
         print('Title Captial Ratio: ',formated_captial_ratio,  ' | ' ,'# Of Chars In Title: ', len(v_title))
         print('# Of Chars In Description: ', len(v_description))
-        print('Views: ', v_view, ' | ' , 'Likes: ', v_likes, ' | ', 'Disikes: ', v_dislikes)
+        print('# of links in Description: ', len(links_in_des))
+        print('Views: ', v_view, ' | ' , 'Likes: ', v_likes, ' | ', 'Disikes: ', v_dislikes )
+        print('# of Comments: ', v_comments)
+        print('Video Length: ', video_len[counter_vid_len])
         print( counter , " of " , total_vids_counter , " scraped.")
         print('-----------------------------------')
-        counter += 1
-        csv_writer.writerow([channel_name, url, video_id[0], v_view, v_likes, v_dislikes, v_title, formated_captial_ratio, len(v_title), len(v_description)])
         
-count = 0
+        csv_writer.writerow([channel_name, url, video_id[0], video_len[counter_vid_len], v_view, v_likes, v_dislikes, v_title, formated_captial_ratio, len(v_title), len(v_description), len(links_in_des), v_comments])
+        counter += 1
+        counter_vid_len +=1
 
+
+count = 0
 #Getting the thumbnail image and save it for RGB breakdown.
 def get_thumbnail(counter): 
     global file_name2
     file_name2 = '{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL")
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
+    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
     
     df_read = pd.read_csv('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ ff_dt_string + " SEMI-FINAL"))
     chnl_name = df_read['Channel Name']
     vid_url = df_read['Video URL']
     vids_id = df_read['Video ID']
+    vid_length = df_read['Video Length']
     views = df_read['Views']
     likes= df_read['Likes']
     dislikes = df_read['Dislikes']
@@ -247,6 +329,8 @@ def get_thumbnail(counter):
     title_captial_ratio = df_read['Title Captial Ratio']
     title_chars = df_read['# Of Title Chars']
     des_chars = df_read['# Of Description Chars']
+    des_links = df_read['# Of Links In Description']
+    comments = df_read['# Of Comments']
     
     for vid_id in vids_id:
         window.update()
@@ -270,7 +354,7 @@ def get_thumbnail(counter):
         img_counter = counter + 1        
         print('Max RGB: ', max_rgb , 'Min RGB: ', min_rgb, 'R: ', r, 'G: ', g, 'B: ', b)
         print(img_counter, ' of ', total_vids_counter)
-        csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], max_rgb, min_rgb, r, g, b])
+        csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], vid_length[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], des_links[counter], comments[counter], max_rgb, min_rgb, r, g, b])
         counter += 1
 
     os.remove('{}\{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string ))
@@ -283,47 +367,62 @@ def optx1(value):
 
     if value == "Views":
         print("X1 = Views")
-        x1_val = 3
+        x1_val = 4
         x1_val_name = "Views"
 
     elif value == "Likes":
         print("X1 = Likes")
-        x1_val = 4
+        x1_val = 5
         x1_val_name = "Likes"
 
     elif value == "Dislikes":
         print("X1 = Dislikes")
-        x1_val = 5
+        x1_val = 6
         x1_val_name = "Disikes"
+
+    elif value == "Video Length":
+        print("X1 = Video Length")
+        x1_val = 3
+        x1_val_name = "Video Length"
 
     elif value == "Title Capital Ratio":
         print("X1 = Title Capital Ratio")
-        x1_val = 7
+        x1_val = 8
         x1_val_name = "Title Capital Ratio"
 
     elif value == "# of Title Chars":
         print("X1 = # of Title Chars")
-        x1_val = 8
+        x1_val = 9
         x1_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("X1 = # of Description Chars")
-        x1_val = 9
+        x1_val = 10
         x1_val_name = "# of Description Chars"
+
+    elif value == "# of Links":
+        print("X1 = # of Links")
+        x1_val = 11
+        x1_val_name = "# of Links"
+
+    elif value == "Comments":
+        print("X1 = Comments")
+        x1_val = 12
+        x1_val_name = "Comments"
 
     elif value == "Red":
         print("X1 = Red")
-        x1_val = 12
+        x1_val = 15
         x1_val_name = "Red"
 
     elif value == "Blue":
         print("X1 = Blue")
-        x1_val = 13
+        x1_val = 16
         x1_val_name = "Blue"
 
     elif value == "Green":
         print("X1 = Green")
-        x1_val = 14
+        x1_val = 17
         x1_val_name = "Green"
     else:
         print("X1 = NONE")
@@ -342,47 +441,62 @@ def optx2(value):
 
     if value == "Views":
         print("X2 = Views")
-        x2_val = 3
+        x2_val = 4
         x2_val_name = "Views"
 
     elif value == "Likes":
         print("X2 = Likes")
-        x2_val = 4
+        x2_val = 5
         x2_val_name = "Likes"
 
     elif value == "Dislikes":
         print("X2 = Dislikes")
-        x2_val = 5
+        x2_val = 6
         x2_val_name = "Disikes"
+
+    elif value == "Video Length":
+        print("X1 = Video Length")
+        x2_val = 3
+        x2_val_name = "Video Length"
 
     elif value == "Title Capital Ratio":
         print("X2 = Title Capital Ratio")
-        x2_val = 7
+        x2_val = 8
         x2_val_name = "Title Capital Ratio"
 
     elif value == "# of Title Chars":
         print("X2 = # of Title Chars")
-        x2_val = 8
+        x2_val = 9
         x2_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("X2 = # of Description Chars")
-        x2_val = 9
+        x2_val = 10
         x2_val_name = "# of Description Chars"
+
+    elif value == "# of Links":
+        print("X1 = # of Links")
+        x2_val = 11
+        x2_val_name = "# of Links"
+
+    elif value == "Comments":
+        print("X1 = Comments")
+        x2_val = 12
+        x2_val_name = "Comments"
 
     elif value == "Red":
         print("X2 = Red")
-        x2_val = 12
+        x2_val = 15
         x2_val_name = "Red"
 
     elif value == "Blue":
         print("X2 = Blue")
-        x2_val = 13
+        x2_val = 16
         x2_val_name = "Blue"
 
     elif value == "Green":
         print("X2 = Green")
-        x2_val = 14
+        x2_val = 17
         x2_val_name = "Green"
     else:
         print("X2 = NONE")
@@ -401,47 +515,62 @@ def optx3(value):
 
     if value == "Views":
         print("X3 = Views")
-        x3_val = 3
+        x3_val = 4
         x3_val_name = "Views"
 
     elif value == "Likes":
         print("X3 = Likes")
-        x3_val = 4
+        x3_val = 5
         x3_val_name = "Likes"
 
     elif value == "Dislikes":
         print("X3 = Dislikes")
-        x3_val = 5
+        x3_val = 6
         x3_val_name = "Disikes"
+
+    elif value == "Video Length":
+        print("X1 = Video Length")
+        x3_val = 3
+        x3_val_name = "Video Length"
 
     elif value == "Title Capital Ratio":
         print("X3 = Title Capital Ratio")
-        x3_val = 7
+        x3_val = 8
         x3_val_name = "Title Capital Ratio"
 
     elif value == "# of Title Chars":
         print("X3 = # of Title Chars")
-        x3_val = 8
+        x3_val = 9
         x3_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("X3 = # of Description Chars")
-        x3_val = 9
+        x3_val = 10
         x3_val_name = "# of Description Chars"
+
+    elif value == "# of Links":
+        print("X1 = # of Links")
+        x3_val = 11
+        x3_val_name = "# of Links"
+
+    elif value == "Comments":
+        print("X1 = Comments")
+        x3_val = 12
+        x3_val_name = "Comments"
 
     elif value == "Red":
         print("X3 = Red")
-        x3_val = 12
+        x3_val = 15
         x3_val_name = "Red"
 
     elif value == "Blue":
         print("X3 = Blue")
-        x3_val = 13
+        x3_val = 16
         x3_val_name = "Blue"
 
     elif value == "Green":
         print("X3 = Green")
-        x3_val = 14
+        x3_val = 17
         x3_val_name = "Green"
     else:
         print("X3 = NONE")
@@ -449,7 +578,7 @@ def optx3(value):
         pass
 
 #Option for Y
-y_val = 3 #DEFAULT for VIEWS
+y_val = 4 #DEFAULT for VIEWS
 y_val_name = "Views" #DEFAULT for VIEWS
 
 def opty(value):
@@ -459,47 +588,62 @@ def opty(value):
     
     if value == "Views":
         print("Y = Views")
-        y_val = 3
+        y_val = 4
         y_val_name = "Views"
 
     elif value == "Likes":
         print("Y = Likes")
-        y_val = 4
+        y_val = 5
         y_val_name = "Likes"
 
     elif value == "Dislikes":
         print("Y = Dislikes")
-        y_val = 5
+        y_val = 6
         y_val_name = "Dislikes"
+
+    elif value == "Video Length":
+        print("X1 = Video Length")
+        y_val = 3
+        y_val_name = "Video Length"
 
     elif value == "Title Capital Ratio":
         print("Y = Title Capital Ratio")
-        y_val = 7
+        y_val = 8
         y_val_name = "Title Capital Ratio"  
 
     elif value == "# of Title Chars":
         print("Y = # of Title Chars")
-        y_val = 8
+        y_val = 9
         y_val_name = "# of Title Chars"
 
     elif value == "# of Description Chars":
         print("Y = # of Description Chars")
-        y_val = 9
+        y_val = 10
         y_val_name = "# of Description Chars"
+
+    elif value == "# of Links":
+        print("X1 = # of Links")
+        y_val = 11
+        y_val_name = "# of Links"
+
+    elif value == "Comments":
+        print("X1 = Comments")
+        y_val = 12
+        y_val_name = "Comments"
 
     elif value == "Red":
         print("Y = Red")
-        y_val = 12
+        y_val = 15
         y_val_name = "Red"
 
     elif value == "Blue":
         print("Y = Blue")
-        y_val = 13
+        y_val = 16
         y_val_name = "Blue"
 
     elif value == "Green":
         print("Y = Green")
-        y_val = 14
+        y_val = 17
         y_val_name = "Green"    
     else:
         y_val == None
@@ -636,6 +780,9 @@ def opts():
 def verify():
     global data
     global video_recent_link
+    global wait,driver
+    global url_link
+
     try:
         data = pd.read_csv(file_name)
         video_recent_link = data['Video URL']
@@ -644,23 +791,21 @@ def verify():
     except:
         print('Starting a whole new scraping process')
 
-        
-    global wait,driver
-    global url_link
-    driver = webdriver.Chrome(chromedriver)
-    wait = WebDriverWait(driver,3)
-    
     window.update()
     url_link = url_val.get()
-    
-    driver.get(url_link)
 
-    #window.update()
+    t1=threading.Thread(target=driver.get(url_link))
+    t1.start()
+    window.update()
     get_chnl_name()
-    #window.update()
+    window.update()
     collect_vids_urls(url_link)
+    window.update()
     collect_vid_data(channel_name)
+    driver.quit()
+    window.update()
     get_thumbnail(count)
+    t1.join()
 
     try:
         combine_csv = pd.read_csv(file_name)
@@ -680,7 +825,7 @@ def verify():
 
 
     print(' Scraping Completed Successfully!')
-    driver.quit()
+
 
 def opn_file():
     global file_name
