@@ -4,10 +4,12 @@ import tkinter as tk
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
 import scipy.spatial.transform._rotation_groups
+#from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import re
 #import YouTube_scraper_functions as YT
 import matplotlib.pyplot as plt  # To visualize
 from matplotlib import pyplot
+import matplotlib.ticker as tkr
 from sklearn.linear_model import LinearRegression
 import sklearn.utils._weight_vector
 from tkinter.ttk import *
@@ -100,7 +102,7 @@ chrome_options.add_argument('--headless')
 
 chromedriver = webdriver.Chrome(executable_path=chromedriver_dir[0], options=chrome_options) 
 driver=chromedriver
-wait = WebDriverWait(driver,3)
+wait = WebDriverWait(driver,5)
 
 
 def get_chnl_name():
@@ -166,8 +168,31 @@ def collect_vids_urls(chnl_url):
                     hrs = 0
                     vid_length = secs+mins+hrs
             except:
-                #Probably tried to scrape a live stream
-                vid_length = 0
+                time.sleep(4)
+                try:
+                    vid_len = wait.until(EC.presence_of_element_located((By.XPATH,'/html/body/ytd-app/div/ytd-page-manager/ytd-browse/ytd-two-column-browse-results-renderer/div[1]/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-grid-renderer/div[1]/ytd-grid-video-renderer[{}]/div[1]/ytd-thumbnail/a/div[1]/ytd-thumbnail-overlay-time-status-renderer/span'.format(total_vids_counter)))).text
+                    vid_len_list = vid_len.split(':')
+                    vid_len_list.reverse()
+
+
+                    try:
+                        secs = int(vid_len_list[0])
+                    except:
+                        secs = 0
+
+                    try:
+                        mins= int(vid_len_list[1])*60
+                    except:
+                        mins = 0
+
+                    try:
+                        hrs = int(vid_len_list[2])*60*60
+                    except:
+                        hrs = 0
+                        vid_length = secs+mins+hrs
+                except:
+                    #Probably tried to scrape a live stream
+                    vid_length = 0
 
             try:
                 if video_recent_link[0] == url:
@@ -183,6 +208,7 @@ def collect_vids_urls(chnl_url):
             csv_writer.writerow([channel_name , url, vid_length])
             total_vids_counter+=1
             driver.execute_script(javascript_2)
+            
             window.update()
             
         except:
@@ -191,7 +217,7 @@ def collect_vids_urls(chnl_url):
             
             total_vids_counter-=1
             break
-
+        #time.sleep(0.1)
 
 def collect_vid_data(channel_name):
     window.update()
@@ -671,24 +697,35 @@ def opts():
                 linear_regressor.fit(X1, Y)  # perform linear regression
                 X1_pred = linear_regressor.predict(X1) # make predictions
                 plt.scatter(X1, Y, label=x1_val_name)
-                plt.plot(X1, X1_pred)
-
+                
                 linear_regressor.fit(X2, Y)
                 X2_pred = linear_regressor.predict(X2)
                 plt.scatter(X2, Y, label=x2_val_name)
-                plt.plot(X2, X2_pred)
-
+                
                 linear_regressor.fit(X3, Y)
                 X3_pred = linear_regressor.predict(X3)
                 plt.scatter(X3, Y, label=x3_val_name)
-                plt.plot(X3, X3_pred)
-
+                
+                plt.legend(loc='upper right')
+                plt.ticklabel_format(style='plain', axis='y')
+                plt.ticklabel_format(style='plain', axis='x')
                 plt.ylabel(y_val_name)
 
-                plt.legend(loc='upper right')
-                #plt.gcf()
-                #plt.draw()
-                #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+                def func(x, pos):  # formatter function takes tick label and tick position
+                   s = '{:0,d}'.format(int(x))
+                   return s
+
+                y_format = tkr.FuncFormatter(func)
+                x_format = tkr.FuncFormatter(func)  # make formatter
+
+                ax = plt.subplot(111)
+                ax.plot(X1, X1_pred)
+                ax.plot(X2, X2_pred)
+                ax.plot(X3,X3_pred)
+                ax.yaxis.set_major_formatter(y_format)
+                ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                fig = plt.gcf() 
+                fig.set_size_inches(11,8)
                 plt.show()
 
                 print('multivariate')
@@ -701,15 +738,26 @@ def opts():
                 X2_pred = linear_regressor.predict(X2)
                 X3_pred = linear_regressor.predict(X3)
                 plt.scatter(X1, Y, label=x1_val_name)
-                plt.plot(xt, Y_pred, color = 'red')
                 plt.scatter(X2, Y, label=x2_val_name)
                 plt.scatter(X3, Y,  label=x3_val_name)
                 plt.ylabel(y_val_name)
 
                 plt.legend(loc='upper right')
-               #plt.gcf()
-               #plt.draw()
-               #plt.savefig('ratioviedsssssssws.png',dpi=100)
+                plt.ticklabel_format(style='plain', axis='y')
+                plt.ticklabel_format(style='plain', axis='x')
+                def func(x, pos):  # formatter function takes tick label and tick position
+                   s = '{:0,d}'.format(int(x))
+                   return s
+
+                y_format = tkr.FuncFormatter(func)
+                x_format = tkr.FuncFormatter(func)  # make formatter
+
+                ax = plt.subplot(111)
+                ax.plot(xt,Y_pred, color='red')
+                ax.yaxis.set_major_formatter(y_format)
+                ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                fig = plt.gcf() 
+                fig.set_size_inches(11,8)
                 plt.show()
                 print('univariate')
         except:
@@ -724,16 +772,30 @@ def opts():
                     linear_regressor.fit(X1, Y)  # perform linear regression
                     X1_pred = linear_regressor.predict(X1) # make predictions
                     plt.scatter(X1, Y, label=x1_val_name)
-                    plt.plot(X1, X1_pred)
+                    
                     linear_regressor.fit(X2, Y)
                     X2_pred = linear_regressor.predict(X2)
                     plt.scatter(X2, Y, label=x2_val_name)
-                    plt.plot(X2, X2_pred)
+ 
                     plt.ylabel(y_val_name)
                     plt.legend(loc='upper right')
-                    #plt.gcf()
-                    #plt.draw()
-                    #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+                    plt.ticklabel_format(style='plain', axis='y')
+                    plt.ticklabel_format(style='plain', axis='x')
+
+                    def func(x, pos):  # formatter function takes tick label and tick position
+                       s = '{:0,d}'.format(int(x))
+                       return s
+
+                    y_format = tkr.FuncFormatter(func)
+                    x_format = tkr.FuncFormatter(func)  # make formatter
+
+                    ax = plt.subplot(111)
+                    ax.plot(X1, X1_pred)
+                    ax.plot(X2,X2_pred)
+                    ax.yaxis.set_major_formatter(y_format)
+                    ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                    fig = plt.gcf() 
+                    fig.set_size_inches(11,8)
                     plt.show()
 
                     print('multivariate')
@@ -743,13 +805,25 @@ def opts():
                     Y_pred = linear_regressor.predict(xt)  # make predictions
                     X2_pred = linear_regressor.predict(X2)
                     plt.scatter(X1, Y, label=x1_val_name)
-                    plt.plot(xt, Y_pred, color = 'red')
+                    #plt.plot(xt, Y_pred, color = 'red')
                     plt.scatter(X2, Y, label=x2_val_name)
                     plt.ylabel(y_val_name)
                     plt.legend(loc='upper right')
-                   #plt.gcf()
-                   #plt.draw()
-                   #plt.savefig('ratioviedsssssssws.png',dpi=100)
+                    plt.ticklabel_format(style='plain', axis='y')
+                    plt.ticklabel_format(style='plain', axis='x')
+                    def func(x, pos):  # formatter function takes tick label and tick position
+                       s = '{:0,d}'.format(int(x))
+                       return s
+
+                    y_format = tkr.FuncFormatter(func)
+                    x_format = tkr.FuncFormatter(func)  # make formatter
+
+                    ax = plt.subplot(111)
+                    ax.plot(xt, Y_pred, color = 'red')
+                    ax.yaxis.set_major_formatter(y_format)
+                    ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                    fig = plt.gcf() 
+                    fig.set_size_inches(11,8)
                     plt.show()
                     print('univariate')
                     
@@ -762,16 +836,30 @@ def opts():
                 linear_regressor.fit(X1, Y)  # perform linear regression
                 X1_pred = linear_regressor.predict(X1) # make predictions
                 plt.scatter(X1, Y, label=x1_val_name)
-                plt.plot(X1, X1_pred)
 
-        
                 plt.ylabel(y_val_name)
         
                 plt.legend(loc='upper right')
-                #plt.gcf()
-                #plt.draw()
-                #plt.savefig('ratioviedsssssssws1.png',dpi=100)
+ 
+                plt.ticklabel_format(style='plain', axis='y')
+                plt.ticklabel_format(style='plain', axis='x')
+
+                def func(x, pos):  # formatter function takes tick label and tick position
+                   s = '{:0,d}'.format(int(x))
+                   return s
+
+                y_format = tkr.FuncFormatter(func)
+                x_format = tkr.FuncFormatter(func)  # make formatter
+
+                ax = plt.subplot(111)
+                #ax1 = plt.subplot(111)
+                ax.plot(X1,X1_pred)
+                ax.yaxis.set_major_formatter(y_format)
+                #ax1.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                fig = plt.gcf() 
+                fig.set_size_inches(11,8)
                 plt.show()
+                
     except:
         print('Please Select X Vriables')
 
