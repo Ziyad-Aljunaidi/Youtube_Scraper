@@ -58,13 +58,13 @@ OPTIONS = [
     "Dislikes",
     "Video Length",
     "Title Capital Ratio",
-    "# of Title Chars",
-    "# of Description Chars",
-    "# of Links",
-    "Comments",
-    "Red",
-    "Blue",
-    "Green",
+    "# Of Title Chars",
+    "# Of Description Chars",
+    "# Of Links In Description",
+    "# Of Comments",
+    "R",
+    "B",
+    "G",
     "NONE"
     
 ] 
@@ -230,7 +230,7 @@ def collect_vid_data(channel_name):
     #Creating the semi-final CSV File for saving the NEW scraped data
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string + " SEMI-FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL','Video ID', 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments'])
+    csv_writer.writerow(['Channel Name', 'Video URL','Video ID', 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Capital Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments'])
 
     #reading the URLs scraped data
     data_file = pd.read_csv('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ff_dt_string))
@@ -347,7 +347,7 @@ def get_thumbnail(counter):
     file_name2 = '{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL")
     csv_file = open('{}\{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " FINAL"),'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Captial Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
+    csv_writer.writerow(['Channel Name', 'Video URL',"Video ID", 'Video Length', 'Views', 'Likes', 'Dislikes', 'Title','Title Capital Ratio','# Of Title Chars', '# Of Description Chars', '# Of Links In Description', '# Of Comments', 'Max RGB', 'Min RGB', 'R', 'G', 'B'])
     
     df_read = pd.read_csv('{}\{}\{}.csv'.format(results_file_dir[0], channel_name+" "+ff_dt_string,channel_name+" "+ ff_dt_string + " SEMI-FINAL"))
     chnl_name = df_read['Channel Name']
@@ -358,7 +358,7 @@ def get_thumbnail(counter):
     likes= df_read['Likes']
     dislikes = df_read['Dislikes']
     title = df_read['Title']
-    title_captial_ratio = df_read['Title Captial Ratio']
+    title_captial_ratio = df_read['Title Capital Ratio']
     title_chars = df_read['# Of Title Chars']
     des_chars = df_read['# Of Description Chars']
     des_links = df_read['# Of Links In Description']
@@ -423,7 +423,7 @@ def optx1(value):
     elif value == "Dislikes":
         print("X1 = Dislikes")
         x1_val = 6
-        x1_val_name = "Disikes"
+        x1_val_name = "Dislikes"
 
     elif value == "Video Length":
         print("X1 = Video Length")
@@ -435,40 +435,40 @@ def optx1(value):
         x1_val = 8
         x1_val_name = "Title Capital Ratio"
 
-    elif value == "# of Title Chars":
-        print("X1 = # of Title Chars")
+    elif value == "# Of Title Chars":
+        print("X1 = # Of Title Chars")
         x1_val = 9
-        x1_val_name = "# of Title Chars"
+        x1_val_name = "# Of Title Chars"
 
-    elif value == "# of Description Chars":
-        print("X1 = # of Description Chars")
+    elif value == "# Of Description Chars":
+        print("X1 = # Of Description Chars")
         x1_val = 10
-        x1_val_name = "# of Description Chars"
+        x1_val_name = "# Of Description Chars"
 
-    elif value == "# of Links":
-        print("X1 = # of Links")
+    elif value == "# Of Links In Description":
+        print("X1 = # Of Links In Description")
         x1_val = 11
-        x1_val_name = "# of Links"
+        x1_val_name = "# Of Links In Description"
 
-    elif value == "Comments":
-        print("X1 = Comments")
+    elif value == "# Of Comments":
+        print("X1 = # Of Comments")
         x1_val = 12
-        x1_val_name = "Comments"
+        x1_val_name = "# Of Comments"
 
-    elif value == "Red":
-        print("X1 = Red")
+    elif value == "R":
+        print("X1 = R")
         x1_val = 15
-        x1_val_name = "Red"
+        x1_val_name = "R"
 
-    elif value == "Blue":
-        print("X1 = Blue")
+    elif value == "B":
+        print("X1 = B")
         x1_val = 16
-        x1_val_name = "Blue"
+        x1_val_name = "B"
 
-    elif value == "Green":
-        print("X1 = Green")
+    elif value == "G":
+        print("X1 = G")
         x1_val = 17
-        x1_val_name = "Green"
+        x1_val_name = "G"
     else:
         print("X1 = NONE")
         x1_val=None
@@ -497,7 +497,7 @@ def optx2(value):
     elif value == "Dislikes":
         print("X2 = Dislikes")
         x2_val = 6
-        x2_val_name = "Disikes"
+        x2_val_name = "Dislikes"
 
     elif value == "Video Length":
         print("X2 = Video Length")
@@ -509,40 +509,40 @@ def optx2(value):
         x2_val = 8
         x2_val_name = "Title Capital Ratio"
 
-    elif value == "# of Title Chars":
-        print("X2 = # of Title Chars")
+    elif value == "# Of Title Chars":
+        print("X2 = # Of Title Chars")
         x2_val = 9
-        x2_val_name = "# of Title Chars"
+        x2_val_name = "# Of Title Chars"
 
-    elif value == "# of Description Chars":
-        print("X2 = # of Description Chars")
+    elif value == "# Of Description Chars":
+        print("X2 = # Of Description Chars")
         x2_val = 10
-        x2_val_name = "# of Description Chars"
+        x2_val_name = "# Of Description Chars"
 
-    elif value == "# of Links":
-        print("X2 = # of Links")
+    elif value == "# Of Links In Description":
+        print("X2 = # Of Links In Description")
         x2_val = 11
-        x2_val_name = "# of Links"
+        x2_val_name = "# Of Links In Description"
 
-    elif value == "Comments":
-        print("X2 = Comments")
+    elif value == "# Of Comments":
+        print("X2 = # Of Comments")
         x2_val = 12
-        x2_val_name = "Comments"
+        x2_val_name = "# Of Comments"
 
-    elif value == "Red":
-        print("X2 = Red")
+    elif value == "R":
+        print("X2 = R")
         x2_val = 15
-        x2_val_name = "Red"
+        x2_val_name = "R"
 
-    elif value == "Blue":
-        print("X2 = Blue")
+    elif value == "B":
+        print("X2 = B")
         x2_val = 16
-        x2_val_name = "Blue"
+        x2_val_name = "B"
 
-    elif value == "Green":
-        print("X2 = Green")
+    elif value == "G":
+        print("X2 = G")
         x2_val = 17
-        x2_val_name = "Green"
+        x2_val_name = "G"
     else:
         print("X2 = NONE")
         x2_val=None
@@ -571,7 +571,7 @@ def optx3(value):
     elif value == "Dislikes":
         print("X3 = Dislikes")
         x3_val = 6
-        x3_val_name = "Disikes"
+        x3_val_name = "Dislikes"
 
     elif value == "Video Length":
         print("X3 = Video Length")
@@ -583,40 +583,40 @@ def optx3(value):
         x3_val = 8
         x3_val_name = "Title Capital Ratio"
 
-    elif value == "# of Title Chars":
-        print("X3 = # of Title Chars")
+    elif value == "# Of Title Chars":
+        print("X3 = # Of Title Chars")
         x3_val = 9
-        x3_val_name = "# of Title Chars"
+        x3_val_name = "# Of Title Chars"
 
-    elif value == "# of Description Chars":
-        print("X3 = # of Description Chars")
+    elif value == "# Of Description Chars":
+        print("X3 = # Of Description Chars")
         x3_val = 10
-        x3_val_name = "# of Description Chars"
+        x3_val_name = "# Of Description Chars"
 
-    elif value == "# of Links":
-        print("X3 = # of Links")
+    elif value == "# Of Links In Description":
+        print("X3 = # Of Links In Description")
         x3_val = 11
-        x3_val_name = "# of Links"
+        x3_val_name = "# Of Links In Description"
 
-    elif value == "Comments":
-        print("X3 = Comments")
+    elif value == "# Of Comments":
+        print("X3 = # Of Comments")
         x3_val = 12
-        x3_val_name = "Comments"
+        x3_val_name = "# Of Comments"
 
-    elif value == "Red":
-        print("X3 = Red")
+    elif value == "R":
+        print("X3 = R")
         x3_val = 15
-        x3_val_name = "Red"
+        x3_val_name = "R"
 
-    elif value == "Blue":
-        print("X3 = Blue")
+    elif value == "B":
+        print("X3 = B")
         x3_val = 16
-        x3_val_name = "Blue"
+        x3_val_name = "B"
 
-    elif value == "Green":
-        print("X3 = Green")
+    elif value == "G":
+        print("X3 = G")
         x3_val = 17
-        x3_val_name = "Green"
+        x3_val_name = "G"
     else:
         print("X3 = NONE")
         x3_val = None
@@ -656,40 +656,40 @@ def opty(value):
         y_val = 8
         y_val_name = "Title Capital Ratio"  
 
-    elif value == "# of Title Chars":
-        print("Y = # of Title Chars")
+    elif value == "# Of Title Chars":
+        print("Y = # Of Title Chars")
         y_val = 9
-        y_val_name = "# of Title Chars"
+        y_val_name = "# Of Title Chars"
 
-    elif value == "# of Description Chars":
-        print("Y = # of Description Chars")
+    elif value == "# Of Description Chars":
+        print("Y = # Of Description Chars")
         y_val = 10
-        y_val_name = "# of Description Chars"
+        y_val_name = "# Of Description Chars"
 
-    elif value == "# of Links":
-        print("Y = # of Links")
+    elif value == "# Of Links In Description":
+        print("Y = # Of Links In Description")
         y_val = 11
-        y_val_name = "# of Links"
+        y_val_name = "# Of Links In Description"
 
-    elif value == "Comments":
-        print("Y = Comments")
+    elif value == "# Of Comments":
+        print("Y = # Of Comments")
         y_val = 12
-        y_val_name = "Comments"
+        y_val_name = "# Of Comments"
 
-    elif value == "Red":
-        print("Y = Red")
+    elif value == "R":
+        print("Y = R")
         y_val = 15
-        y_val_name = "Red"
+        y_val_name = "R"
 
-    elif value == "Blue":
-        print("Y = Blue")
+    elif value == "B":
+        print("Y = B")
         y_val = 16
-        y_val_name = "Blue"
+        y_val_name = "B"
 
-    elif value == "Green":
-        print("Y = Green")
+    elif value == "G":
+        print("Y = G")
         y_val = 17
-        y_val_name = "Green"    
+        y_val_name = "G"    
     else:
         y_val == None
         print("Y = NONE")
