@@ -10,6 +10,17 @@ from matplotlib import pyplot
 import matplotlib.ticker as tkr
 from sklearn.linear_model import LinearRegression
 from sklearn import datasets, linear_model
+import statsmodels.tsa.statespace._filters
+import statsmodels.tsa.statespace._filters._conventional
+import statsmodels.tsa.statespace._filters._univariate
+import statsmodels.tsa.statespace._filters._univariate_diffuse
+import statsmodels.tsa.statespace._filters._inversions
+import statsmodels.tsa.statespace._smoothers
+import statsmodels.tsa.statespace._smoothers._conventional
+import statsmodels.tsa.statespace._smoothers._univariate
+import statsmodels.tsa.statespace._smoothers._univariate_diffuse
+import statsmodels.tsa.statespace._smoothers._classical
+import statsmodels.tsa.statespace._smoothers._alternative
 import statsmodels.api as sm
 from scipy import stats
 import sklearn.utils._weight_vector
