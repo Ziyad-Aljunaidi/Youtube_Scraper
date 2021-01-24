@@ -4,13 +4,14 @@ import tkinter as tk
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
 import scipy.spatial.transform._rotation_groups
-#from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import re
-#import YouTube_scraper_functions as YT
 import matplotlib.pyplot as plt  # To visualize
 from matplotlib import pyplot
 import matplotlib.ticker as tkr
 from sklearn.linear_model import LinearRegression
+from sklearn import datasets, linear_model
+import statsmodels.api as sm
+from scipy import stats
 import sklearn.utils._weight_vector
 from tkinter.ttk import *
 from tkinter import HORIZONTAL
@@ -25,12 +26,14 @@ import urllib.parse as urlparse
 from urllib.parse import parse_qs
 from datetime import datetime
 from os import listdir
+from os import system, name 
 import imageio
 import time
 import pandas as pd
 import csv
 import os
 from tkinter import filedialog
+import statistics
 
 
 class Redirect():
@@ -101,8 +104,11 @@ chrome_options.add_argument("--start-maximized")
 chrome_options.add_argument('--headless')
 
 chromedriver = webdriver.Chrome(executable_path=chromedriver_dir[0], options=chrome_options) 
-driver=chromedriver
-wait = WebDriverWait(driver,5)
+
+
+
+def clearTextInput():
+    chnl_val.delete("1.0","end")
 
 
 def get_chnl_name():
@@ -327,7 +333,7 @@ def collect_vid_data(channel_name):
         print('# of Comments: ', v_comments)
         print('Video Length: ', video_len[counter_vid_len])
         print( counter , " of " , total_vids_counter , " scraped.")
-        print('-----------------------------------')
+        print('==============================================================================')
         
         csv_writer.writerow([channel_name, url, video_id[0], video_len[counter_vid_len], v_view, v_likes, v_dislikes, v_title, formated_captial_ratio, len(v_title), len(v_description), len(links_in_des), v_comments])
         counter += 1
@@ -359,29 +365,42 @@ def get_thumbnail(counter):
     comments = df_read['# Of Comments']
     
     for vid_id in vids_id:
-        window.update()
-        img_vid_id = "VideoID{}.png".format(vid_id)
-        url =  "http://img.youtube.com/vi/" + vid_id +"/0.jpg"
-        urlretrieve(url, '{}/{}/Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
+        try:
+            window.update()
+            img_vid_id = "VideoID{}.png".format(vid_id)
+            url =  "http://img.youtube.com/vi/" + vid_id +"/0.jpg"
+            urlretrieve(url, '{}/{}/Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
 
-        print(img_vid_id + ' ...Downloaded!')
-        
-        image = Image.open('{}/{}/Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id,img_vid_id))
-        w, h = image.size
-        cropped = image.crop((0, 45, w, h - 45))
-        cropped.save('{}/{}/Cropped Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
+            print(img_vid_id + ' ...Downloaded!')
 
-        pic = imageio.imread('{}/{}/Cropped Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
-        max_rgb = pic.max()
-        min_rgb = pic.min()
-        r = pic[100, 50, 0]
-        g = pic[100, 50, 1]
-        b = pic[100, 50, 2]
-        img_counter = counter + 1        
-        print('Max RGB: ', max_rgb , 'Min RGB: ', min_rgb, 'R: ', r, 'G: ', g, 'B: ', b)
-        print(img_counter, ' of ', total_vids_counter)
-        csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], vid_length[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], des_links[counter], comments[counter], max_rgb, min_rgb, r, g, b])
-        counter += 1
+            image = Image.open('{}/{}/Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id,img_vid_id))
+            w, h = image.size
+            cropped = image.crop((0, 45, w, h - 45))
+            cropped.save('{}/{}/Cropped Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
+
+            pic = imageio.imread('{}/{}/Cropped Images/{}'.format(results_file_dir[0],channel_name+" "+ff_dt_string,img_vid_id, img_vid_id))
+            max_rgb = pic.max()
+            min_rgb = pic.min()
+            r = pic[100, 50, 0]
+            g = pic[100, 50, 1]
+            b = pic[100, 50, 2]
+            img_counter = counter + 1        
+            print('Max RGB: ', max_rgb , 'Min RGB: ', min_rgb, 'R: ', r, 'G: ', g, 'B: ', b)
+            print(img_counter, ' of ', total_vids_counter)
+            csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], vid_length[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], des_links[counter], comments[counter], max_rgb, min_rgb, r, g, b])
+            counter += 1
+        except:
+            max_rgb = pic.max()
+            min_rgb = pic.min()
+            r = 0
+            g = 0
+            b = 0
+            img_counter = counter + 1 
+            print('Max RGB: ', max_rgb , 'Min RGB: ', min_rgb, 'R: ', r, 'G: ', g, 'B: ', b)
+            print(img_counter, ' of ', total_vids_counter)
+            csv_writer.writerow([ chnl_name[counter], vid_url[counter], vids_id[counter], vid_length[counter], views[counter], likes[counter], dislikes[counter], title[counter], title_captial_ratio[counter], title_chars[counter], des_chars[counter], des_links[counter], comments[counter], max_rgb, min_rgb, r, g, b])
+            counter += 1
+            pass
 
     os.remove('{}\{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string ))
     os.remove('{}\{}\{}.csv'.format(results_file_dir[0],channel_name+" "+ff_dt_string, channel_name+" "+ ff_dt_string + " SEMI-FINAL"))
@@ -481,7 +500,7 @@ def optx2(value):
         x2_val_name = "Disikes"
 
     elif value == "Video Length":
-        print("X1 = Video Length")
+        print("X2 = Video Length")
         x2_val = 3
         x2_val_name = "Video Length"
 
@@ -501,12 +520,12 @@ def optx2(value):
         x2_val_name = "# of Description Chars"
 
     elif value == "# of Links":
-        print("X1 = # of Links")
+        print("X2 = # of Links")
         x2_val = 11
         x2_val_name = "# of Links"
 
     elif value == "Comments":
-        print("X1 = Comments")
+        print("X2 = Comments")
         x2_val = 12
         x2_val_name = "Comments"
 
@@ -555,7 +574,7 @@ def optx3(value):
         x3_val_name = "Disikes"
 
     elif value == "Video Length":
-        print("X1 = Video Length")
+        print("X3 = Video Length")
         x3_val = 3
         x3_val_name = "Video Length"
 
@@ -575,12 +594,12 @@ def optx3(value):
         x3_val_name = "# of Description Chars"
 
     elif value == "# of Links":
-        print("X1 = # of Links")
+        print("X3 = # of Links")
         x3_val = 11
         x3_val_name = "# of Links"
 
     elif value == "Comments":
-        print("X1 = Comments")
+        print("X3 = Comments")
         x3_val = 12
         x3_val_name = "Comments"
 
@@ -628,7 +647,7 @@ def opty(value):
         y_val_name = "Dislikes"
 
     elif value == "Video Length":
-        print("X1 = Video Length")
+        print("Y = Video Length")
         y_val = 3
         y_val_name = "Video Length"
 
@@ -648,12 +667,12 @@ def opty(value):
         y_val_name = "# of Description Chars"
 
     elif value == "# of Links":
-        print("X1 = # of Links")
+        print("Y = # of Links")
         y_val = 11
         y_val_name = "# of Links"
 
     elif value == "Comments":
-        print("X1 = Comments")
+        print("Y = Comments")
         y_val = 12
         y_val_name = "Comments"
 
@@ -679,19 +698,89 @@ def opty(value):
 
 def opts():
 
+    
     try:
         data = pd.read_csv(file_name)  # load data set
     except:
         data = pd.read_csv(file_name2)
+
+
+    def func(x, pos):  # formatter function takes tick label and tick position
+        s = '{:0,d}'.format(int(x))
+        return s
+
+    def reg_info(x, y):
+       X2 = sm.add_constant(X1)
+       est = sm.OLS(y, X2)
+       est2 = est.fit()
+       return est2.summary()
     
     try:
         try:
-            
+        
+
             X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
             X2 = data.iloc[:, x2_val].values.reshape(-1,1)
             X3 = data.iloc[:, x3_val].values.reshape(-1,1)
             Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
             linear_regressor = LinearRegression()  # create object for the class
+
+            clearTextInput()
+
+
+            
+            
+
+            try:  
+                col_data = data[x1_val_name]
+                print('\n\n')
+                print('==============================================================================')
+                print('                                     X1                                       ')
+                print('==============================================================================')
+                print('X1 Mean: ',statistics.mean(col_data))
+                print('X1 Median: ',statistics.median(col_data))
+                print('X1 Mode: ',statistics.mode(col_data))
+                print('==============================================================================')
+                print(reg_info(X1,Y))
+            except:
+                print('==============================================================================')
+                print('                     Cannot get Regression Results For X1                     ')
+                print('==============================================================================')
+                pass
+
+            try:
+                col_data2 = data[x2_val_name]
+                print('\n')              
+                print('==============================================================================')
+                print('                                     X2                                       ')
+                print('==============================================================================')
+                print('X2 Mean: ',statistics.mean(col_data2))
+                print('X2 Median: ',statistics.median(col_data2))
+                print('X2 Mode: ',statistics.mode(col_data2))
+                print('==============================================================================')
+                print(reg_info(X2,Y))  
+            except:
+                print('==============================================================================')
+                print('                     Cannot get Regression Results For X2                     ')
+                print('==============================================================================')
+                pass
+
+            try:
+                col_data3 = data[x3_val_name]
+                print('\n')
+                print('==============================================================================')
+                print('                                     X3                                       ')
+                print('==============================================================================')
+                print('X3 Mean: ',statistics.mean(col_data3))
+                print('X3 Median: ',statistics.median(col_data3))
+                print('X3 Mode: ',statistics.mode(col_data3))
+                print('==============================================================================')
+                print(reg_info(X3,Y)) 
+            except:
+                print('==============================================================================')
+                print('                     Cannot get Regression Results For X3                     ')
+                print('==============================================================================')
+                pass
 
             if val_var.get() == 1:
                 linear_regressor.fit(X1, Y)  # perform linear regression
@@ -711,9 +800,6 @@ def opts():
                 plt.ticklabel_format(style='plain', axis='x')
                 plt.ylabel(y_val_name)
 
-                def func(x, pos):  # formatter function takes tick label and tick position
-                   s = '{:0,d}'.format(int(x))
-                   return s
 
                 y_format = tkr.FuncFormatter(func)
                 x_format = tkr.FuncFormatter(func)  # make formatter
@@ -732,6 +818,7 @@ def opts():
 
 
             else:
+
                 xt = (X1 + X2 + X3)/3
                 linear_regressor.fit(xt, Y)  # perform linear regression
                 Y_pred = linear_regressor.predict(xt)  # make predictions
@@ -745,9 +832,6 @@ def opts():
                 plt.legend(loc='upper right')
                 plt.ticklabel_format(style='plain', axis='y')
                 plt.ticklabel_format(style='plain', axis='x')
-                def func(x, pos):  # formatter function takes tick label and tick position
-                   s = '{:0,d}'.format(int(x))
-                   return s
 
                 y_format = tkr.FuncFormatter(func)
                 x_format = tkr.FuncFormatter(func)  # make formatter
@@ -760,13 +844,50 @@ def opts():
                 fig.set_size_inches(11,8)
                 plt.show()
                 print('univariate')
+
         except:
             try:
-                
+                clearTextInput()
                 X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
                 X2 = data.iloc[:, x2_val].values.reshape(-1,1)
                 Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
                 linear_regressor = LinearRegression()  # create object for the class
+                
+                
+                col_data2 = data[x2_val_name]
+                try:
+                    col_data = data[x1_val_name]
+                    print('\n\n')
+                    print('==============================================================================')
+                    print('                                     X1                                       ')
+                    print('==============================================================================')
+                    print('X1 Mean: ',statistics.mean(col_data))
+                    print('X1 Median: ',statistics.median(col_data))
+                    print('X1 Mode: ',statistics.mode(col_data))
+                    print('==============================================================================')
+                    print(reg_info(X1,Y))
+                except:
+                    print('==============================================================================')
+                    print('                     Cannot get Regression Results For X1                     ')
+                    print('==============================================================================')
+                    pass  
+
+                try:
+                    col_data2 = data[x2_val_name]
+                    print('\n')
+                    print('==============================================================================')
+                    print('                                     X2                                       ')
+                    print('==============================================================================')
+                    print('X2 Mean: ',statistics.mean(col_data2))
+                    print('X2 Median: ',statistics.median(col_data2))
+                    print('X2 Mode: ',statistics.mode(col_data2))
+                    print('==============================================================================')
+                    print(reg_info(X2,Y))   
+                except:
+                    print('==============================================================================')
+                    print('                     Cannot get Regression Results For X2                     ')
+                    print('==============================================================================')
+                    pass
 
                 if val_var.get() == 1:
                     linear_regressor.fit(X1, Y)  # perform linear regression
@@ -782,10 +903,6 @@ def opts():
                     plt.ticklabel_format(style='plain', axis='y')
                     plt.ticklabel_format(style='plain', axis='x')
 
-                    def func(x, pos):  # formatter function takes tick label and tick position
-                       s = '{:0,d}'.format(int(x))
-                       return s
-
                     y_format = tkr.FuncFormatter(func)
                     x_format = tkr.FuncFormatter(func)  # make formatter
 
@@ -799,7 +916,9 @@ def opts():
                     plt.show()
 
                     print('multivariate')
+
                 else:
+
                     xt = (X1 + X2)/2
                     linear_regressor.fit(xt, Y)  # perform linear regression
                     Y_pred = linear_regressor.predict(xt)  # make predictions
@@ -809,11 +928,10 @@ def opts():
                     plt.scatter(X2, Y, label=x2_val_name)
                     plt.ylabel(y_val_name)
                     plt.legend(loc='upper right')
+
+                    
                     plt.ticklabel_format(style='plain', axis='y')
                     plt.ticklabel_format(style='plain', axis='x')
-                    def func(x, pos):  # formatter function takes tick label and tick position
-                       s = '{:0,d}'.format(int(x))
-                       return s
 
                     y_format = tkr.FuncFormatter(func)
                     x_format = tkr.FuncFormatter(func)  # make formatter
@@ -827,12 +945,32 @@ def opts():
                     plt.show()
                     print('univariate')
                     
+                    
             except:
-                
+
                 X1 = data.iloc[:, x1_val].values.reshape(-1, 1)  # values converts it into a numpy array
                 Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
                 linear_regressor = LinearRegression()  # create object for the class
-        
+                
+                clearTextInput()
+                try:
+                    col_data = data[x1_val_name]
+                    print('\n\n')
+                    print('==============================================================================')
+                    print('                                     X1                                       ')
+                    print('==============================================================================')
+                    print('X1 Mean: ',statistics.mean(col_data))
+                    print('X1 Median: ',statistics.median(col_data))
+                    print('X1 Mode: ',statistics.mode(col_data))
+                    print('==============================================================================')
+                
+                    print(reg_info(X1,Y))
+                except: 
+                    print('==============================================================================')
+                    print('                     Cannot get Regression Results For X1                     ')
+                    print('==============================================================================')
+                    pass
+
                 linear_regressor.fit(X1, Y)  # perform linear regression
                 X1_pred = linear_regressor.predict(X1) # make predictions
                 plt.scatter(X1, Y, label=x1_val_name)
@@ -840,25 +978,23 @@ def opts():
                 plt.ylabel(y_val_name)
         
                 plt.legend(loc='upper right')
- 
+            
                 plt.ticklabel_format(style='plain', axis='y')
                 plt.ticklabel_format(style='plain', axis='x')
-
-                def func(x, pos):  # formatter function takes tick label and tick position
-                   s = '{:0,d}'.format(int(x))
-                   return s
 
                 y_format = tkr.FuncFormatter(func)
                 x_format = tkr.FuncFormatter(func)  # make formatter
 
                 ax = plt.subplot(111)
-                #ax1 = plt.subplot(111)
                 ax.plot(X1,X1_pred)
                 ax.yaxis.set_major_formatter(y_format)
-                #ax1.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
                 fig = plt.gcf() 
                 fig.set_size_inches(11,8)
                 plt.show()
+
+
+
                 
     except:
         print('Please Select X Vriables')
@@ -870,6 +1006,9 @@ def verify():
     global video_recent_link
     global wait,driver
     global url_link
+
+    driver=chromedriver
+    wait = WebDriverWait(driver,5)
 
     try:
         data = pd.read_csv(file_name)
@@ -929,14 +1068,14 @@ def opn_file():
         #multi_var["state"] = "normal"
         #uni_var["state"] = "normal"
 
-frame = tk.Frame(master=window, width=480 ,height=580 )
+frame = tk.Frame(master=window, width=650 ,height=900 )
 
-url = tk.Label(master=frame, text="Enter URL")
-url_val = tk.Entry(master=frame, width = 50, textvariable = url_text)
+url = tk.Label(master=frame, text="Enter YouTube URL")
+url_val = tk.Entry(master=frame, width = 70, textvariable = url_text)
 url_btn = tk.Button(master=frame, text="Start", width=10, command=verify)
 
 chnl = tk.Label(master=frame, text="Output")
-chnl_val = tk.Text(master=frame, width = 57, height=22)
+chnl_val = tk.Text(master=frame, width = 78, height=42)
 os.sys.stdout = Redirect(chnl_val)
 
 open_results_btn = tk.Button(master=frame , text="Open Results Folder", width=20, command=opn_file)
@@ -965,31 +1104,31 @@ uni_var = tk.Radiobutton(frame, text='Uni-variate',variable=val_var, value = 2)
 frame.pack(fill=tk.X)
 
 url.place(x=10, y=15)
-url_val.place(x=75, y=15)
-url_btn.place(x=390, y=10)
+url_val.place(x=125, y=15)
+url_btn.place(x=560, y=10)
 chnl.place(x=10, y=45)
 chnl_val.place(x=10, y=75)
 
-open_results_btn.place(x=320, y=450)
-open_reg_btn.place(x=10, y=450)
+open_results_btn.place(x=490, y=765)
+open_reg_btn.place(x=10, y=765)
 
-text_x1.place(x=45, y=485)
-var_x1.config(width=6)
-var_x1.place(x=10, y=510)
+text_x1.place(x=70, y=800)
+var_x1.config(width=15)
+var_x1.place(x=10, y=830)
 
-text_x2.place(x=170, y=485)
-var_x2.config(width=6)
-var_x2.place(x=135, y=510)
+text_x2.place(x=235, y=800)
+var_x2.config(width=15)
+var_x2.place(x=175, y=830)
 
-text_x3.place(x=300,y=485)
-var_x3.config(width=6)
-var_x3.place(x=265, y=510)
-#
-text_y.place(x=425, y=485)
-var_y.config(width=6)
-var_y.place(x=390, y=510)
-multi_var.place(x=10, y= 550)
-uni_var.place(x=120, y=550)
+text_x3.place(x=400,y=800)
+var_x3.config(width=15)
+var_x3.place(x=340, y=830)
+
+text_y.place(x=570, y=800)
+var_y.config(width=15)
+var_y.place(x=506, y=830)
+multi_var.place(x=10, y= 870)
+uni_var.place(x=120, y=870)
 
 open_reg_btn["state"] = "disabled"
 var_x1["state"] = "disabled"
