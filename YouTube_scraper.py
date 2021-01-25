@@ -45,7 +45,7 @@ import csv
 import os
 from tkinter import filedialog
 import statistics
-
+import webbrowser
 
 class Redirect():
 
@@ -134,7 +134,7 @@ def get_chnl_name():
             os.makedirs(results_file_dir[0])
 
         os.mkdir('./{}/{}'.format(results_file_dir[0],channel_name + " " + ff_dt_string))
-        print ('Directory, {}/{}'.format(results_file_dir[0],channel_name + " " + ff_dt_string) + ' created..')
+        print ('Directory, {}/{}'.format(results_file_dir[0], channel_name + " " + ff_dt_string) + ' created..')
 
         os.mkdir('./{}/{}/Images'.format(results_file_dir[0],channel_name + " " + ff_dt_string))
         print ('Directory, {}/{}/Images'.format(results_file_dir[0],channel_name + " " + ff_dt_string) + ' created..')
@@ -175,7 +175,7 @@ def collect_vids_urls(chnl_url):
                     secs = 0
 
                 try:
-                    mins= int(vid_len_list[1])*60
+                    mins = int(vid_len_list[1])*60
                 except:
                     mins = 0
 
@@ -715,6 +715,8 @@ def opts():
     except:
         data = pd.read_csv(file_name2)
 
+    names = list(data['Title'])
+    vid_url_name =data['Video URL']
 
     def func(x, pos):  # formatter function takes tick label and tick position
         s = '{:0,d}'.format(int(x))
@@ -725,6 +727,42 @@ def opts():
        est = sm.OLS(y, X2)
        est2 = est.fit()
        return est2.summary()
+
+    def hover(event):
+        vis = annot.get_visible()
+        if event.inaxes == ax:
+            cont, ind = sc.contains(event)
+            if cont:
+                update_annot(ind)
+                annot.set_visible(True)
+                fig.canvas.draw_idle()
+            else:
+                if vis:
+                    annot.set_visible(False)
+                    fig.canvas.draw_idle()
+  
+
+
+    def update_annot(ind):
+        global text
+        pos = sc.get_offsets()[ind["ind"][0]]
+        annot.xy = pos
+        text = "{}".format(" ".join([names[n] for n in ind["ind"]]))
+        annot.set_text(text)
+        #annot.get_bbox_patch().set_facecolor(cmap(norm(c[ind["ind"][0]])))
+        annot.get_bbox_patch().set_alpha(0.4)
+
+
+    def openvid(event):
+        vis = annot.get_visible()
+        url_pos = names.index(text)
+        if event.inaxes == ax:
+            cont, ind = sc.contains(event)
+            if cont:
+                update_annot(ind)
+                webbrowser.open_new_tab(vid_url_name[url_pos])
+            else:
+                pass
     
     try:
         try:
@@ -737,10 +775,6 @@ def opts():
             linear_regressor = LinearRegression()  # create object for the class
 
             clearTextInput()
-
-
-            
-            
 
             try:  
                 col_data = data[x1_val_name]
@@ -925,7 +959,8 @@ def opts():
                     fig = plt.gcf() 
                     fig.set_size_inches(11,8)
                     plt.show()
-
+                    fig.canvas.mpl_connect("motion_notify_event", hover)
+                    fig.canvas.mpl_connect('button_press_event', openvid)
                     print('multivariate')
 
                 else:
@@ -954,6 +989,8 @@ def opts():
                     fig = plt.gcf() 
                     fig.set_size_inches(11,8)
                     plt.show()
+                    fig.canvas.mpl_connect("motion_notify_event", hover)
+                    fig.canvas.mpl_connect('button_press_event', opentez)
                     print('univariate')
                     
                     
@@ -963,6 +1000,8 @@ def opts():
                 Y = data.iloc[:, y_val].values.reshape(-1, 1)  # -1 means that calculate the dimension of rows, but have 1 column
                 linear_regressor = LinearRegression()  # create object for the class
                 
+                norm = plt.Normalize(1,4)
+                cmap = plt.cm.RdYlGn
                 clearTextInput()
                 try:
                     col_data = data[x1_val_name]
@@ -984,7 +1023,7 @@ def opts():
 
                 linear_regressor.fit(X1, Y)  # perform linear regression
                 X1_pred = linear_regressor.predict(X1) # make predictions
-                plt.scatter(X1, Y, label=x1_val_name)
+                sc = plt.scatter(X1, Y, label=x1_val_name)
 
                 plt.ylabel(y_val_name)
         
@@ -1000,8 +1039,12 @@ def opts():
                 ax.plot(X1,X1_pred)
                 ax.yaxis.set_major_formatter(y_format)
                 ax.xaxis.set_major_formatter(x_format)   # set formatter to needed axis
+                annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",bbox=dict(boxstyle="round", fc="w"),arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
                 fig = plt.gcf() 
                 fig.set_size_inches(11,8)
+                fig.canvas.mpl_connect("motion_notify_event", hover)
+                fig.canvas.mpl_connect('button_press_event', openvid)
                 plt.show()
 
 
@@ -1079,14 +1122,14 @@ def opn_file():
         #multi_var["state"] = "normal"
         #uni_var["state"] = "normal"
 
-frame = tk.Frame(master=window, width=650 ,height=900 )
+frame = tk.Frame(master=window, width=650 ,height=700 )
 
 url = tk.Label(master=frame, text="Enter YouTube URL")
 url_val = tk.Entry(master=frame, width = 70, textvariable = url_text)
 url_btn = tk.Button(master=frame, text="Start", width=10, command=verify)
 
 chnl = tk.Label(master=frame, text="Output")
-chnl_val = tk.Text(master=frame, width = 78, height=42)
+chnl_val = tk.Text(master=frame, width = 78, height=30)
 os.sys.stdout = Redirect(chnl_val)
 
 open_results_btn = tk.Button(master=frame , text="Open Results Folder", width=20, command=opn_file)
@@ -1120,26 +1163,27 @@ url_btn.place(x=560, y=10)
 chnl.place(x=10, y=45)
 chnl_val.place(x=10, y=75)
 
-open_results_btn.place(x=490, y=765)
-open_reg_btn.place(x=10, y=765)
+open_results_btn.place(x=490, y=580)
+open_reg_btn.place(x=10, y=580)
 
-text_x1.place(x=70, y=800)
+text_x1.place(x=70, y=620)
 var_x1.config(width=15)
-var_x1.place(x=10, y=830)
+var_x1.place(x=10, y=640)
 
-text_x2.place(x=235, y=800)
+text_x2.place(x=235, y=620)
 var_x2.config(width=15)
-var_x2.place(x=175, y=830)
+var_x2.place(x=175, y=640)
 
-text_x3.place(x=400,y=800)
+text_x3.place(x=400,y=620)
 var_x3.config(width=15)
-var_x3.place(x=340, y=830)
+var_x3.place(x=340, y=640)
 
-text_y.place(x=570, y=800)
+text_y.place(x=570, y=620)
 var_y.config(width=15)
-var_y.place(x=506, y=830)
-multi_var.place(x=10, y= 870)
-uni_var.place(x=120, y=870)
+var_y.place(x=506, y=640)
+multi_var.place(x=10, y= 675)
+uni_var.place(x=120, y=675,)
+
 
 open_reg_btn["state"] = "disabled"
 var_x1["state"] = "disabled"
